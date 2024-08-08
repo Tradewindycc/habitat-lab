@@ -475,7 +475,7 @@ class HierarchicalPolicy(nn.Module, Policy):
                 should_choose_new_skill,
                 deterministic,
                 log_info,
-                # **kwargs,
+                **kwargs,
             )
             new_skills = new_skills.numpy()
 

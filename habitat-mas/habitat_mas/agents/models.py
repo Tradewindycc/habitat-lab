@@ -3,13 +3,14 @@ from .crab_core import Action
 from typing import List
 import openai
 
+OPENAI_API_KEY = ""
 
 class OpenAIModel:
     def __init__(
         self,
         system_prompt: str,
         action_space: List[Action],
-        model="gpt-4o",
+        model="gpt-3.5-turbo",
         window_size=None,
     ) -> None:
         self.system_message = {
@@ -21,7 +22,9 @@ class OpenAIModel:
         self.chat_history = []
         self.window_size = window_size
         self.model = model
-        self.client = openai.OpenAI()
+        self.client = openai.OpenAI(
+            api_key=OPENAI_API_KEY
+        )
 
     def chat(self, content: str):
         new_message = {"role": "user", "content": content}
