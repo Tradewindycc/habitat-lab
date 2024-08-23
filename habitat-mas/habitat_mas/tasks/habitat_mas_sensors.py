@@ -10,7 +10,7 @@ from habitat.core.registry import registry
 from habitat.core.simulator import Sensor, SensorTypes
 from habitat_mas.dataset.defaults import habitat_mas_data_dir
 from habitat_mas.scene_graph.scene_graph_hssd import SceneGraphHSSD
-from habitat_mas.scene_graph.utils import generate_objects_description, generate_agents_description    
+from habitat_mas.scene_graph.utils import generate_objects_description, generate_agents_description, gernerate_receptacles_description    
 
 @registry.register_sensor
 class HSSDSceneDescriptionSensor(Sensor):
@@ -42,10 +42,12 @@ class HSSDSceneDescriptionSensor(Sensor):
         # Generate scene descriptions
         objects_description = generate_objects_description(sg.object_layer)
         agent_description = generate_agents_description(sg.agent_layer, sg.region_layer, sg.nav_mesh)
+        receptacle_description = gernerate_receptacles_description(sg.sim)
         
         scene_description = {
             "objects_description": objects_description,
-            "agent_description": agent_description
+            "agent_description": agent_description,
+            "receptacles_description": receptacle_description
         }
         
         # convert dict to json string

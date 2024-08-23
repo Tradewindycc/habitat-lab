@@ -128,6 +128,7 @@ class ArmAction(ArticulatedAgentAction):
             self.grip_ctrlr = None
 
         self.disable_grip = config.disable_grip
+        self.ee_target = None
 
     def reset(self, *args, **kwargs):
         self.arm_ctrlr.reset(*args, **kwargs)
@@ -155,14 +156,15 @@ class ArmAction(ArticulatedAgentAction):
             "a_selection_of_base_or_arm" in self._task.actions
             and not self._task.actions["a_selection_of_base_or_arm"].select_arm
         ):
-            return
+            return self.ee_target
         else:
-            self.arm_ctrlr.step(arm_action)
+            self.ee_target = self.arm_ctrlr.step(arm_action)
             if self.grip_ctrlr is not None and self._config.auto_grasp:
                 self.grip_ctrlr.step(None)
             elif self.grip_ctrlr is not None and not self.disable_grip:
                 grip_action = kwargs[self._action_arg_prefix + "grip_action"]
                 self.grip_ctrlr.step(grip_action)
+            return self.ee_target
 
 
 @registry.register_task_action

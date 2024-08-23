@@ -18,7 +18,7 @@ Habitat-MAS is a Python package for Multi-Agent Systems in Habitat virtual envir
 You should clone the our full fork of the habitat-lab project:
 
 ```sh
-git clone git@github.com:SgtVincent/habitat-lab.git
+git clone https://github.com/SgtVincent/habitat-lab.git -b embodied_mas
 ```
 
 ### Prerequisites
@@ -55,8 +55,8 @@ python -m habitat_sim.utils.datasets_download --uids hssd-hab hab3-episodes habi
 ```
 
 Besides, you should:
-- download the robot configuration data from [here](https://drive.google.com/drive/folders/1ZxxpeqwBBbaTPjdgfss5LUsCkUgue12O?usp=drive_link), and place it into the data/robots folder.
-- download the perception and manipulation episodes data from [here](https://drive.google.com/drive/folders/1EKuXVMyKA5FuCNveV86QE6VvT6Whhiy7?usp=drive_link), and place them into the data/datasets folder.
+- download the robot configuration data from [here](https://drive.google.com/drive/folders/132Fhf0YGCEgMFUw93-b48eRiv4E9pj8h), and place it into the `data/robots` folder.
+- download the perception, manipulation and mobility episodes data from [here](https://drive.google.com/drive/folders/1fnhzhRAW7Pzw48A4YsoijgdDPiKCArnK), and place them into the `data/datasets` folder.
 
 The folder should look like this:
 ```
@@ -86,15 +86,40 @@ habitat-lab
 │       ├── perception
 │           ├── perception_eval_drone.json.gz
 │           ...
+│       ├── mobility
+│           ├── mobility_eval.json.gz
+│           ...
 ...
 ```
 
-### Data Structure
+### Dataset Generation
 
-**Multi robot navigation** ()
+Here is a demo data generation command for dataset in `hssd` scene.
 
-- Deploy robots: spot, drone, fetch, stretch for navigation tasks.
-- Obtain frame data for testing vision-language model understanding.
+```sh
+python habitat-lab/habitat/datasets/rearrange/run_episode_generator.py --run \
+--config data/config/replica_cad/all_object_receptacle_dataset.yaml \
+--num-episodes 50 \
+--out data/datasets/replica_cad/multi_objects_manipulation_eval.json.gz \
+--type manipulation \
+[Optional] --resume habitat-mas/habitat_mas/data/robot_resume/StretchRobot_default.json
+```
+
+`--config`: path of your dataset generation configuration data.
+
+`--num-episodes`: episodes number you want to generate.
+
+`--out`: desired path of your newly generated dataset.
+
+`--type`: the purpose of your dataset, currently there are only three types: `preception`, `manipulation`, `hssd`.
+
+`--resume`: path of desired robot resume as object position constraint, currently it is not used, you can freely ignore it.
+
+Besides, for dataset generation, you should:
+
+- download the dataset generation configuration data from [here](https://drive.google.com/drive/folders/1YVoCg2-tGkKWrdej4km6Abxsop0wS9XJ), and place them into the `data` folder.
+
+### Dataset Structure
 
 **Multi robot perception**
 
@@ -113,7 +138,13 @@ The demo is adapted from [Habitat-3.0 Social Rearrangement](../habitat-baselines
 ```sh
 # Under the habitat-lab root directory
 python -u -m habitat_baselines.run \
-  --config-name=social_rearrange/llm_spot_drone.yaml \
+  --config-name=multi_rearrange/llm_spot_drone.yaml \
   habitat_baselines.evaluate=True \
   habitat_baselines.num_environments=1
 ```
+
+Besides, to run our episodes, you should:
+
+- download the high-level configuration data from [here](https://drive.google.com/drive/folders/1DR-WErfJLqmZuOCp1UUQ9T-scp8JdgPN), and place them into the `habitat-baselines/habitat_baselines/config` folder.
+- download the simulator-level configuration data from [here](https://drive.google.com/drive/folders/1ovNky8ZzQVnVf_FyFaergRl3Qp94PWMz), and place them into the `habitat-lab/habitat/config/benchmark` folder.
+- download the dataset configuration data from [here](https://drive.google.com/drive/folders/1bOM9aXEiifp-QL4w0GVj5qrGiU5ex0SI), and place them into the `habitat-lab/habitat/config/habitat/dataset`

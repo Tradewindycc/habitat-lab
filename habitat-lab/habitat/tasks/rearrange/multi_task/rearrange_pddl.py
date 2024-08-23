@@ -235,6 +235,8 @@ class PddlSimInfo:
         if self.check_type_matches(
             entity, SimulatorObjectType.MOVABLE_ENTITY.value
         ):
+            if ename in self.receptacles:
+                return np.array(self.receptacles[ename].center())
             rom = self.sim.get_rigid_object_manager()
             idx = self.obj_ids[ename]
             abs_obj_id = self.sim.scene_obj_ids[idx]
@@ -261,7 +263,10 @@ class PddlSimInfo:
         elif self.check_type_matches(
             entity, SimulatorObjectType.ARTICULATED_RECEPTACLE_ENTITY.value
         ):
-            return self.marker_handles[ename]
+            if ename in self.marker_handles:
+                return self.marker_handles[ename]
+            elif ename in self.receptacles:
+                return self.receptacles[ename]
         elif self.check_type_matches(
             entity, SimulatorObjectType.GOAL_ENTITY.value
         ):
@@ -273,6 +278,8 @@ class PddlSimInfo:
         elif self.check_type_matches(
             entity, SimulatorObjectType.STATIC_RECEPTACLE_ENTITY.value
         ):
+            if ename in self.receptacles:
+                return self.receptacles[ename]
             asset_name = ename.split("_:")[0]
             return self.receptacles[asset_name]
         else:

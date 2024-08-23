@@ -120,6 +120,7 @@ class FixedHighLevelPolicy(HighLevelPolicy):
         plan_masks,
         deterministic,
         log_info,
+        **kwargs,
     ):
         batch_size = masks.shape[0]
         next_skill = torch.zeros(batch_size)

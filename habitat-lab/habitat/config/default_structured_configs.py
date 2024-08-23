@@ -310,6 +310,26 @@ class OracleArmActionConfig(ArmActionConfig):
     render_ee_target: bool = True
 
 @dataclass
+class StretchOracleArmActionConfig(ArmActionConfig):
+    r"""
+    In Rearrangement tasks only, the action that will move the robot arm around. The action represents to delta angle (in radians) of each joint.
+    Use pybullet IK planner to control the arm action.
+    """
+    type: str = "ArmAction"
+    arm_controller: str = "StretchOraclePickAction"
+    grip_controller: str = "SuctionGraspAction"
+    render_ee_target: bool = True
+    arm_joint_mask: Optional[List[int]] = field(default_factory=lambda: [1, 0, 0, 0, 1, 1, 1, 1])
+    # arm_joint_dimensionality: int = 10
+    grasp_thresh_dist: float = 0.15
+    disable_grip: bool = False
+    delta_pos_limit: float = 0.0125
+    ee_ctrl_lim: float = 0.015
+    # gaze_distance_range: Optional[List[float]] = field(default_factory=lambda: [0.1, 3.0])
+    # center_cone_angle_threshold: float = 20.0
+    # center_cone_vector: Optional[List[float]] = field(default_factory=lambda: [0.0, 1.0, 0.0])
+
+@dataclass
 class BaseVelocityActionConfig(ActionConfig):
     r"""
     In Rearrangement only. Corresponds to the base velocity. Contains two continuous actions, the first one controls forward and backward motion, the second the rotation.
@@ -795,6 +815,7 @@ class ObjectGoalConfig(LabSensorConfig):
 
 @dataclass
 class ArmWorkspaceRGBSensorConfig(LabSensorConfig):
+    uuid: str = "arm_workspace_rgb"
     type: str = "ArmWorkspaceRGBSensor"
     agent_idx: int = 0
     pixel_threshold: int = 10
@@ -802,7 +823,24 @@ class ArmWorkspaceRGBSensorConfig(LabSensorConfig):
     width: int = 640
     rgb_sensor_name: str = "head_rgb"
     depth_sensor_name: str = "head_depth"
-    
+
+@dataclass
+class ArmWorkspaceRGBArmSensorConfig(LabSensorConfig):
+    uuid: str = "arm_workspace_rgb_arm"
+    type: str = "ArmWorkspaceRGBArmSensor"
+    agent_idx: int = 0
+    pixel_threshold: int = 10
+    height: int = 480
+    width: int = 640
+    rgb_sensor_name_arm: str = "articulated_agent_arm_rgb"
+    depth_sensor_name_arm: str = "articulated_agent_arm_depth"
+
+@dataclass
+class ObjectMasksSensorConfig(LabSensorConfig):
+    type: str = "ObjectMasksSensor"
+    rgb_sensor_name: str = "head_rgb"
+    semantic_sensor_name: str = "head_semantic"
+
 # habitat-mas sensors
 @dataclass
 class HSSDSceneDescriptionSensorConfig(LabSensorConfig):
@@ -2071,7 +2109,7 @@ class DatasetConfig(HabitatBaseConfig):
         "habitat-test-scenes/v1/{split}/{split}.json.gz"
     )
     # TODO(YCC): load robot config
-    mode: str = "perception"
+    mode: str = ""
     randomize_agent_start: int = 1
     robot_config: str = (
         "data/robots/json/{mode}.json"
@@ -2186,6 +2224,12 @@ cs.store(
     group="habitat/task/actions",
     name="oracle_arm_action",
     node=OracleArmActionConfig,
+)
+cs.store(
+    package="habitat.task.actions.arm_action",
+    group="habitat/task/actions",
+    name="stretch_oracle_arm_action",
+    node=StretchOracleArmActionConfig,
 )
 
 cs.store(
@@ -2631,6 +2675,18 @@ cs.store(
     group="habitat/task/lab_sensors",
     name="arm_workspace_rgb_sensor",
     node=ArmWorkspaceRGBSensorConfig
+)
+cs.store(
+    package="habitat.task.lab_sensors.arm_workspace_rgb_arm_sensor",
+    group="habitat/task/lab_sensors",
+    name="arm_workspace_rgb_arm_sensor",
+    node=ArmWorkspaceRGBArmSensorConfig
+)
+cs.store(
+    package="habitat.task.lab_sensors.object_masks_sensor",
+    group="habitat/task/lab_sensors",
+    name="object_masks_sensor",
+    node=ObjectMasksSensorConfig
 )
 
 # habitat-mas sensors

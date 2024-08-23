@@ -23,5 +23,5 @@ turn_thresh: 0.5
 # For re-computing navmesh for different bases 
 base_type: "wheel"
 agent_height: 1.0
-agent_max_climb: 0.02
-agent_max_slope: 5.0
+agent_max_climb: 0.05
+agent_max_slope: 10.0

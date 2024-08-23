@@ -3,8 +3,7 @@
 # Copyright (c) Meta Platforms, Inc. and its affiliates.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-import os
-from os import path as osp
+
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -12,7 +11,6 @@ from typing import (
     Dict,
     List,
     Optional,
-    Tuple,
     Sequence,
     Set,
     Union,
@@ -24,7 +22,7 @@ import numpy as np
 from gym import spaces
 from gym.spaces.box import Box
 from omegaconf import DictConfig
-from habitat_sim.agent.agent import Agent, AgentConfiguration, AgentState
+
 import habitat_sim
 from habitat.config.default import get_agent_config
 from habitat.core.batch_rendering.env_batch_renderer_constants import (
@@ -307,6 +305,11 @@ class HabitatSim(habitat_sim.Simulator, Simulator):
             )
         )
         self._prev_sim_obs: Optional[Observations] = None
+        
+        self.navmesh_visualization = self.habitat_config.get(
+            "navmesh_visualization", False
+        )
+        
 
     def create_sim_config(
         self, _sensor_suite: SensorSuite
@@ -745,4 +748,3 @@ class HabitatSim(habitat_sim.Simulator, Simulator):
         observations[
             KEYFRAME_OBSERVATION_KEY
         ] = self.gfx_replay_manager.extract_keyframe()
-

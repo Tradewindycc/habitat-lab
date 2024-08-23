@@ -24,7 +24,7 @@ habitat_baselines:
   distrib_updater_name: "HRLDDPPO"
   torch_gpu_id: 0
   video_fps: 30
-  eval_ckpt_path_dir: "data/ckpt/social_nav_latest.pth"
+  eval_ckpt_path_dir: "data/checkpoints"
   num_environments: 18
   num_updates: -1
   total_num_steps: 5.0e7
@@ -35,9 +35,7 @@ habitat_baselines:
   load_resume_state_config: False
   rollout_storage_name: "HrlRolloutStorage"
 
-  evaluate: True
-  # evaluator:
-  #   _target_: habitat_baselines.rl.multi_agent.habitat_mas_evaluator.HabitatMASEvaluator
+  evaluate: False
 
   eval:
     extra_sim_sensors:

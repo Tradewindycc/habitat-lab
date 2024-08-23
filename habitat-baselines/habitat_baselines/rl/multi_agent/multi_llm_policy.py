@@ -73,8 +73,10 @@ class MultiLLMPolicy(MultiPolicy):
             env_text_context = envs_text_context[i]
             # if no previous actions, then it is the first step of the episode
             if not env_prev_actions.any():
-                # robot_resume = env_text_context["robot_resume"]
-                # scene_description = env_text_context["scene_description"]
+                if "robot_resume" in env_text_context:
+                    robot_resume = env_text_context["robot_resume"]
+                if "scene_description" in env_text_context:
+                    scene_description = env_text_context["scene_description"]
                 #TODO: Add group discussion here
                 # task_assignments = group_discussion(robot_resume, scene_description)
                 # {
@@ -106,8 +108,8 @@ class MultiLLMPolicy(MultiPolicy):
                     agent_prev_actions[agent_i],
                     agent_masks[agent_i],
                     deterministic,
-                    # envs_text_context=envs_text_context,
-                    # agent_task_assignments=agent_task_assignments # pass the task planning result to the policy
+                    envs_text_context=envs_text_context,
+                    agent_task_assignments=agent_task_assignments # pass the task planning result to the policy
                 )
             )
         policy_info = _merge_list_dict(

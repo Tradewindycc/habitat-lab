@@ -9,7 +9,7 @@ defaults:
   - /habitat/simulator/agents/habitat_mas_agents@habitat.simulator.agents.agent_2: FetchRobot_default
   - /habitat/simulator/agents/habitat_mas_agents@habitat.simulator.agents.agent_3: StretchRobot_default
 
-  - /habitat/dataset/rearrangement: zxz_perception
+  - /habitat/dataset/embodied_mas: manipulation
 
   - /habitat/task/actions@habitat.task.actions.agent_0_arm_action: oracle_arm_action
   - /habitat/task/actions@habitat.task.actions.agent_0_base_velocity: base_velocity_non_cylinder
@@ -33,8 +33,6 @@ defaults:
   - /habitat/task/actions@habitat.task.actions.agent_3_rearrange_stop: rearrange_stop
   - /habitat/task/actions@habitat.task.actions.agent_3_pddl_apply_action: pddl_apply_action
   - /habitat/task/actions@habitat.task.actions.agent_3_oracle_nav_action: stretch_oracle_nav_action
-
-
 
   - /habitat/task/measurements:
     - pddl_success
@@ -98,85 +96,8 @@ habitat:
         end_on_collide: True
         collide_penalty: 0.5
     task_spec_base_path: benchmark/multi_agent/
-    task_spec: pddl/zxz_multi_agent
+    task_spec: pddl/multi_agent_man
     pddl_domain_def: fp
-    actions:
-      agent_0_base_velocity:
-        lin_speed: 40.0
-        ang_speed: 20.0
-
-      agent_0_oracle_nav_action:
-        type: OracleNavAction
-        motion_control: base_velocity_non_cylinder
-        lin_speed: 10.0
-        ang_speed: 10.0
-        spawn_max_dist_to_obj: -1.0
-        # For noncylinder navmesh action
-        # If we allow the agent to do sliding
-        allow_dyn_slide: True
-        # navmesh_offset: [[0.0, 0.0], [0.25, 0.0], [-0.25, 0.0]]
-        navmesh_offset: []
-        # If we allow the robot to move laterally
-        enable_lateral_move: False
-        # There is a collision if the difference between the clamped NavMesh position and target position
-        # is more than collision_threshold for any point.
-        collision_threshold: 0.1
-        dist_thresh: 0.3
-        turn_thresh: 0.5
-
-      agent_1_base_velocity:
-        type: DroneBaseVelAction
-        lin_speed: 10.0
-        ang_speed: 10.0
-        allow_dyn_slide: True
-        allow_back: True
-
-      agent_2_base_velocity:
-        lin_speed: 40.0
-        ang_speed: 20.0
-
-      agent_2_oracle_nav_action:
-        type: OracleNavAction
-        motion_control: base_velocity_non_cylinder
-        lin_speed: 10.0
-        ang_speed: 10.0
-        spawn_max_dist_to_obj: -1.0
-        # For noncylinder navmesh action
-        # If we allow the agent to do sliding
-        allow_dyn_slide: True
-        # navmesh_offset: [[0.0, 0.0], [0.25, 0.0], [-0.25, 0.0]]
-        navmesh_offset: []
-        # If we allow the robot to move laterally
-        enable_lateral_move: False
-        # There is a collision if the difference between the clamped NavMesh position and target position
-        # is more than collision_threshold for any point.
-        collision_threshold: 0.1
-        dist_thresh: 0.3
-        turn_thresh: 0.5
-
-      agent_3_base_velocity:
-        lin_speed: 40.0
-        ang_speed: 20.0
-
-      agent_3_oracle_nav_action:
-        type: OracleNavAction
-        motion_control: base_velocity_non_cylinder
-        lin_speed: 10.0
-        ang_speed: 10.0
-        spawn_max_dist_to_obj: -1.0
-        # For noncylinder navmesh action
-        # If we allow the agent to do sliding
-        allow_dyn_slide: True
-        # navmesh_offset: [[0.0, 0.0], [0.25, 0.0], [-0.25, 0.0]]
-        navmesh_offset: []
-        # If we allow the robot to move laterally
-        enable_lateral_move: False
-        # There is a collision if the difference between the clamped NavMesh position and target position
-        # is more than collision_threshold for any point.
-        collision_threshold: 0.1
-        dist_thresh: 0.3
-        turn_thresh: 0.5
-
     robot_at_thresh: 3.0
 
   environment:
@@ -211,8 +132,8 @@ habitat:
       agent_3:
         joint_start_noise: 0.0
   dataset:
-    data_path: data/datasets/perception/perception_eval_spot.json.gz
+    data_path: data/datasets/replica_cad/multi_agent_eval.json.gz
     # new
     randomize_agent_start: 1
-    robot_config: data/robots/json/perception.json
-    mode: perception
+    robot_config: data/robots/json/manipulation.json
+    mode: manipulation

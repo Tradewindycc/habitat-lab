@@ -222,12 +222,13 @@ class RearrangeTask(NavigationTask):
                 filter_agent_position = _filter_agent_position
             
             if self._dataset.config.randomize_agent_start:
+            
                 (
-                        articulated_agent_pos,
-                        articulated_agent_rot,
-                    ) = self._sim.set_articulated_agent_base_to_random_point(
-                        agent_idx=agent_idx, filter_func=filter_agent_position
-                    )
+                    articulated_agent_pos,
+                    articulated_agent_rot,
+                ) = self._sim.set_articulated_agent_base_to_random_point(
+                    agent_idx=agent_idx, filter_func=filter_agent_position
+                )
             else:
                 episode_id = self._sim.ep_info.episode_id
                 agents = self._robot_config[episode_id]['agents']
@@ -413,8 +414,9 @@ class RearrangeTask(NavigationTask):
         return self.n_objs
 
     def get_task_text_context(self) -> dict:
-        if 'dataset' in self._sim.ep_info.info and self._sim.ep_info.info['dataset'] == 'mp3d':
+        if self._dataset.config.mode not in ['perception', 'manipulation', 'mobility', 'hssd']:
             return {}
+        # if 'dataset' in self._sim.ep_info.info and self._sim.ep_info.info['dataset'] == 'mp3d':
         current_episode_idx = self._sim.ep_info.episode_id
         robot_config = self._robot_config[current_episode_idx]["agents"]
         return get_text_context(self._sim, robot_config)

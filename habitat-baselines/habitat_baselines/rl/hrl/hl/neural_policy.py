@@ -216,6 +216,7 @@ class NeuralHighLevelPolicy(HighLevelPolicy):
         plan_masks,
         deterministic,
         log_info,
+        **kwargs,
     ):
         batch_size = plan_masks.shape[0]
         next_skill = torch.zeros(batch_size, dtype=torch.long)

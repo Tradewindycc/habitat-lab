@@ -103,3 +103,4 @@ data
 /wandb/
 video_dir/**
 *.ply
+debug/

@@ -55,6 +55,17 @@ predicates:
         robot_id:
           pos: Y
 
+  - name: robot_at_receptacle
+    args:
+      - name: receptacle
+        expr_type: static_receptacle_entity_type
+      - name: robot_id
+        expr_type: robot_entity_type
+    set_state:
+      robot_states:
+        robot_id:
+          pos: receptacle
+
   - name: at
     args:
       - name: obj
@@ -226,13 +237,15 @@ actions:
   # contains.
   - name: nav_to_receptacle_by_name
     parameters:
-      - name: marker
-        expr_type: art_receptacle_entity_type
+      # - name: marker
+      #   expr_type: art_receptacle_entity_type
+      - name: receptacle
+        expr_type: static_receptacle_entity_type
       - name: robot
         expr_type: robot_entity_type
     precondition: null
     postcondition:
-      - robot_at(marker, robot)
+      - robot_at_receptacle(receptacle, robot)
     task_info:
       task: NavToObjTask-v0
       task_def: "nav_to_obj"

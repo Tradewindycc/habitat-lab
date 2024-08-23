@@ -157,7 +157,7 @@ def get_all_robot_arm_workspace():
         },
         "StretchRobot": {
             "arm_len": 8,
-            "pb_link_idx": 10
+            "pb_link_idx": 1
         }
     }
     

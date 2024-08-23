@@ -331,6 +331,7 @@ class EmbodiedTask:
         if "action_args" not in action or action["action_args"] is None:
             action["action_args"] = {}
         observations: Optional[Any] = None
+        ee_target: Optional[Any] = None
         if isinstance(action_name, tuple):  # there are multiple actions
             for a_name in action_name:
                 observations = self._step_single_action(
@@ -338,6 +339,8 @@ class EmbodiedTask:
                     action,
                     episode,
                 )
+                if a_name == 'arm_action':
+                    ee_target = observations
         else:
             observations = self._step_single_action(
                 action_name, action, episode
@@ -355,6 +358,7 @@ class EmbodiedTask:
                 action=action,
                 task=self,
                 should_time=True,
+                ee_target=ee_target,
             )
         )
         self._is_episode_active = self._check_episode_is_active(

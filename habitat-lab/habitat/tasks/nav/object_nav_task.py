@@ -3,7 +3,6 @@
 # LICENSE file in the root directory of this source tree.
 
 import os
-import os.path as osp
 from typing import TYPE_CHECKING, Any, List, Optional
 
 import attr
@@ -14,7 +13,6 @@ from habitat.core.logging import logger
 from habitat.core.registry import registry
 from habitat.core.simulator import AgentState, Sensor, SensorTypes
 from habitat.core.utils import not_none_validator
-
 from habitat.tasks.nav.nav import (
     NavigationEpisode,
     NavigationGoal,

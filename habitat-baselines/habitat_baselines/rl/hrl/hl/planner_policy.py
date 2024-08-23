@@ -291,6 +291,7 @@ class PlannerHighLevelPolicy(HighLevelPolicy):
         plan_masks,
         deterministic,
         log_info,
+        **kwargs,
     ):
         batch_size = masks.shape[0]
         all_pred_vals = observations["all_predicates"]

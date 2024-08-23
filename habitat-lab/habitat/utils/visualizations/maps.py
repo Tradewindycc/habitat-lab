@@ -7,7 +7,7 @@
 import os
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
-import imageio.v2 as imageio
+import imageio
 import numpy as np
 import scipy.ndimage
 

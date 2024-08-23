@@ -148,6 +148,9 @@ class HabitatMASEvaluator(Evaluator):
             # Then collect the context of the episode
             if not prev_actions.any():
                 envs_text_context = envs.call(["get_task_text_context"] * envs.num_envs)
+                # TODO(YCC): Get the env text context from the env to initalize the agent
+                if hasattr(agent.actor_critic, "reset_pddl"):
+                    agent.actor_critic.reset_pddl(envs_text_context)
 
             space_lengths = {}
             n_agents = len(config.habitat.simulator.agents)

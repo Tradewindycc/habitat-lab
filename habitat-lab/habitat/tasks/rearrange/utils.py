@@ -384,7 +384,10 @@ class IkHelper:
     def set_arm_state(self, joint_pos, joint_vel=None):
         if joint_vel is None:
             joint_vel = np.zeros((len(joint_pos),))
-        for i in range(7):
+
+        dof = len(joint_pos)
+
+        for i in range(dof):
             p.resetJointState(
                 self.robo_id,
                 i,
@@ -425,23 +428,49 @@ class IkHelper:
         :param targ_ee: 3D target position in the robot BASE coordinate frame
         """
         js = p.calculateInverseKinematics(
-            self.robo_id,
-            self.pb_link_idx,
-            targ_ee,
+            bodyUniqueId=self.robo_id,
+            endEffectorLinkIndex=self.pb_link_idx,
+            targetPosition=targ_ee,
+            maxNumIterations=200,
+            # residualThreshold=0.01,
             physicsClientId=self.pc_id,
         )
-        joint_indices = [self._non_fixed_joints[i] for i in range(self._arm_len)]
-        return [js[i] for i in joint_indices]
+        # TODO(zxz): fix output index
+        # joint_indices = [self._non_fixed_joints[i] for i in range(self._arm_len)]
+        # return [js[i] for i in joint_indices]
+        return js[:self._arm_len]
 
-    def is_reachable(self, targ_ee, thresh=0.05):
+    def is_reachable(self, cur_ee, targ_ee, ctrl_lim, thresh=0.05):
         """
+        :param cur_ee: 3D current position in the robot BASE coordinate frame
         :param targ_ee: 3D target position in the robot BASE coordinate frame
+        :param ctrl_lim: control limit for the joints
+        :param thresh: threshold for distance between current and target ee
         """
+        # TODO(zxz): iterative fk
+        # step_lim = 0
+        # while np.linalg.norm(np.array(cur_ee) - np.array(targ_ee)) >= thresh and step_lim < 1 / ctrl_lim:
+        #     pos_diff = targ_ee - cur_ee
+        #     js = self.calc_ik(targ_ee + pos_diff * ctrl_lim)
+        #     if js is None:
+        #         return False
+        #     js = np.array(js)
+        #     self.set_arm_state(js, np.zeros(js.shape))
+        #     cur_ee = self.calc_fk(js)
+        #     step_lim += 1
+        # return np.linalg.norm(np.array(cur_ee) - np.array(targ_ee)) < thresh
         js = self.calc_ik(targ_ee)
         if js is None:
             return False
         ee = self.calc_fk(js)
         return np.linalg.norm(ee - targ_ee) < thresh
+
+    def joint_control(self, joint_angles):
+        for i, joint_angle in enumerate(joint_angles):
+            p.setJointMotorControl2(self.robo_id, i, p.POSITION_CONTROL, joint_angle)
+
+    def step_sim(self):
+        p.stepSimulation()
 
 
 class UsesArticulatedAgentInterface:

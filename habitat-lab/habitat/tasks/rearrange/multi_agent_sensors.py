@@ -43,14 +43,15 @@ class DidAgentsCollide(Measure):
         #         f"Sensor only supports 2 agents. Got {agent_ids=}"
         #     )
 
+        # TODO(zxz): here is episode done check!
         if not all(
             coll_name_matches(cp, agent_id)
             for cp in contact_points
             for agent_id in agent_ids
         ):
             found_contact = False
-        else:
-            found_contact = True
+        # else:
+        #     found_contact = True
 
         self._metric = found_contact
 

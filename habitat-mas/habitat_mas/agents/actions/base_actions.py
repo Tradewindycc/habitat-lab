@@ -50,3 +50,13 @@ def nav_to_goal(goal: str):
         goal: The goal to navigate to.
     """
     pass
+
+@action
+def nav_to_receptacle_by_name(receptacle: str):
+    """
+    Navigate to a receptacle by name.
+    
+    Args:
+        receptacle: The receptacle to navigate to.
+    """
+    pass
