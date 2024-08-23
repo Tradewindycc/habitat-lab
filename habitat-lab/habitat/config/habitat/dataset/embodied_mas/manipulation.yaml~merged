@@ -1,0 +1,18 @@
+# @package habitat.dataset
+
+defaults:
+  - /habitat/dataset: dataset_config_schema
+  - _self_
+
+type: RearrangeDataset-v0
+split: eval
+<<<<<<< HEAD
+data_path: data/datasets/replica_cad/two_agent_manipulation_eval.json.gz
+=======
+<<<<<<< HEAD:habitat-lab/habitat/config/habitat/dataset/embodied_mas/hssd.yaml
+data_path: data/datasets/hssd/hssd_eval.json.gz
+=======
+data_path: data/datasets/replica_cad/two_agent_manipulation_eval.json.gz
+>>>>>>> 73eec9937cdde76669edfd475e794e4384574b77:habitat-lab/habitat/config/habitat/dataset/embodied_mas/manipulation.yaml
+>>>>>>> 73eec9937cdde76669edfd475e794e4384574b77
+scenes_dir: "data/scene_datasets/hssd-hab"
