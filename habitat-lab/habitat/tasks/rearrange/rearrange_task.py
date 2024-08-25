@@ -114,9 +114,14 @@ class RearrangeTask(NavigationTask):
 
         # TODO(YCC): robot config path
         robot_config_path = dataset.config.robot_config.format(mode=dataset.config.mode)
-        with open(robot_config_path, "r") as robot_config_file:
-            robot_config = json.load(robot_config_file)
-        self._robot_config = robot_config
+        if osp.exists(robot_config_path):
+            with open(robot_config_path, "r") as robot_config_file:
+                robot_config = json.load(robot_config_file)
+            self._robot_config = robot_config
+        elif not self._dataset.config.randomize_agent_start:
+            raise FileNotFoundError(f"Robot config not found: {robot_config_path}")
+        else:
+            self._robot_config = None
 
         fname = data_path.split("/")[-1].split(".")[0]
         cache_path = osp.join(
@@ -414,9 +419,9 @@ class RearrangeTask(NavigationTask):
         return self.n_objs
 
     def get_task_text_context(self) -> dict:
-        if self._dataset.config.mode not in ['perception', 'manipulation', 'mobility', 'hssd']:
+        if self._dataset.config.mode not in ["perception", "manipulation", "mobility", "hssd"]:
             return {}
-        # if 'dataset' in self._sim.ep_info.info and self._sim.ep_info.info['dataset'] == 'mp3d':
+        assert self._robot_config is not None, "robot config not set"
         current_episode_idx = self._sim.ep_info.episode_id
         robot_config = self._robot_config[current_episode_idx]["agents"]
         return get_text_context(self._sim, robot_config)
