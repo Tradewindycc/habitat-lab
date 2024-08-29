@@ -339,7 +339,10 @@ class EmbodiedTask:
                     action,
                     episode,
                 )
-                if a_name == 'arm_action':
+                if (a_name == "arm_pick_action" or
+                    a_name == "arm_place_action" or
+                    a_name == "arm_reset_action"
+                ):
                     ee_target = observations
         else:
             observations = self._step_single_action(

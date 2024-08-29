@@ -210,7 +210,7 @@ class NnSkillPolicy(SkillPolicy):
                 {
                     k: v
                     for k, v in filtered_action_space["arm_action"].items()
-                    if k != "grip_action"
+                    if k != "grip_pick_action"
                 }
             )
 

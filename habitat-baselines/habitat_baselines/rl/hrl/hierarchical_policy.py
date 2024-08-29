@@ -745,7 +745,7 @@ class HierarchicalReflectPolicy(HierarchicalPolicy):
         self.full_config = full_config
 
     def reset_pddl(self, envs_text_context = None):
-        # TODO(YCC): reset pddl problem from LLM agent
+        # reset pddl problem from LLM agent
         task_spec_file = osp.join(
             self.full_config.habitat.task.task_spec_base_path,
             self.full_config.habitat.task.task_spec + ".yaml",
@@ -759,22 +759,26 @@ class HierarchicalReflectPolicy(HierarchicalPolicy):
             domain_file_path += ".yaml"
         with open(get_full_habitat_config_path(domain_file_path), "r") as f:
             domain_def = yaml.safe_load(f)
-        domain_def_str = str(domain_def)
+        domain_def_str = domain_def
 
-        task_description, pddl_problem = self._high_level_policy.reset_pddl(str(envs_text_context) + domain_def_str)
-        assert pddl_problem is not None, "pddl_problem is None"
+        assert hasattr(self._high_level_policy, "reset_pddl"), "Only LLMReflectPolicy has reset_pddl method"
+        pddl_problem = self._high_level_policy.reset_pddl(
+            envs_text_context=envs_text_context[0], 
+            pddl_def=domain_def_str
+        )
 
-        # TODO(YCC): get the absolute path of task_spec_file
-        task_spec_file_path = osp.abspath(osp.join("habitat-lab/habitat/config", task_spec_file))
-        assert osp.exists(task_spec_file_path), "task_spec_file_path does not exist"
-        if isinstance(pddl_problem, dict):
-            pddl_yaml = yaml.dump(pddl_problem, default_flow_style=False)
-        with open(task_spec_file_path, "w") as file:
-            file.write(pddl_yaml)
-        
-        return PddlProblem(
-            domain_file,
-            task_spec_file,
-            self.config,
-            read_config=False
-        )   
+        # no new skill needed to learn, reset pddl
+        if pddl_problem != {}:
+            task_spec_file_path = osp.abspath(osp.join("habitat-lab/habitat/config", task_spec_file))
+            assert osp.exists(task_spec_file_path), "task_spec_file_path does not exist"
+            if isinstance(pddl_problem, dict):
+                pddl_yaml = yaml.dump(pddl_problem, default_flow_style=False)
+            with open(task_spec_file_path, "w") as file:
+                file.write(pddl_yaml)
+            
+            return PddlProblem(
+                domain_file,
+                task_spec_file,
+                self.config,
+                read_config=False
+            )   

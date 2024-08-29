@@ -1,7 +1,9 @@
 # ruff: noqa
 from typing import Any, Dict, List, Tuple
-
+from os import path as osp
 import torch
+import json
+import re
 
 from habitat.tasks.rearrange.multi_task.pddl_action import PddlAction
 from habitat.tasks.rearrange.multi_task.rearrange_pddl import parse_func
@@ -26,7 +28,6 @@ class LLMHighLevelReflectPolicy(HighLevelPolicy):
         llm_actions = ACTION_POOL
         # Initialize the LLM agent
         self._llm_agent = self._init_llm_agent(kwargs["agent_name"], llm_actions)
-        self.step_mode = "pddl"
 
         self._update_solution_actions(
             [self._parse_solution_actions() for _ in range(self._num_envs)]
@@ -34,27 +35,63 @@ class LLMHighLevelReflectPolicy(HighLevelPolicy):
 
         self._next_sol_idxs = torch.zeros(self._num_envs, dtype=torch.int32)
 
-    def _setup_step_mode(self, step_mode):
-        self.step_mode = step_mode
-
     def _init_llm_agent(self, agent_name, action_list):
         return LLMReflectAgent(
             agent_name=agent_name,
-            system_prompt=system_description[0],
             action_space=action_list,
         )
     
     # TODO(YCC): initialize the LLM agent with environment config and reset pddl problem
-    def reset_pddl(self, content):
+    def reset_pddl(self, envs_text_context, pddl_def):
         self._llm_agent = self._init_llm_agent(self._agent_name, ACTION_POOL)
-        task_description, pddl_problem = self._llm_agent.chat(
-            content = str(content),
-            user_prompt = user_prompt[0], 
+
+        
+
+        env_prompt, goal_specify = self.user_prompt_initialize(envs_text_context, pddl_def)
+
+        env_summary = self._llm_agent.chat(
+            system_prompt=system_prompt[0],
+            user_prompt = env_prompt, 
             assistant_prompt = assistant_prompt[0],
-            mode = "initial"
-            )
-        # TODO(YCC): make sure the pddl_problem is valid for yaml
-        return task_description, pddl_problem
+        )
+        env_summary_dict = self.string_dict_format(env_summary)
+
+        goal_specify = goal_specify.replace("[OBJECT]", env_summary_dict["objects"][0]['object_id'])
+        goal_specify = goal_specify.replace("[TARGET_RECEPTACLE]", env_summary_dict["receptacles"][0]['receptacle_id'])
+        goal_specify = goal_specify.replace("[GOAL_RECEPTACLE]", env_summary_dict["receptacles"][1]['receptacle_id'])
+
+        response = self._llm_agent.chat(
+            system_prompt=system_prompt[1],
+            user_prompt = goal_specify, 
+            assistant_prompt = assistant_prompt[1],
+        )
+
+        
+        response_dict = self.string_dict_format(response)
+        (
+            choice, 
+            task_description, 
+            pddl_problem,
+            new_skills,
+        ) = response_dict["choice"], response_dict["task_description"], response_dict["pddl_problem"], response_dict["new_skills"]
+
+        # save the task description into tasks.json
+        task_json_path = "habitat-mas/habitat_mas/reflect/tasks.json"
+        try:
+            with open(task_json_path, "r") as f:
+                tasks = json.load(f)
+        except:
+            tasks = []
+        tasks.append(task_description)
+        with open(task_json_path, "w") as f:
+            json.dump(tasks, f)
+
+        # TODO(YCC): verify the choice
+
+        # TODO(YCC): verify the pddl problem 
+        
+
+        return pddl_problem
 
     def _parse_function_call_args(self, llm_args: Dict) -> str:
         """
@@ -72,7 +109,6 @@ class LLMHighLevelReflectPolicy(HighLevelPolicy):
         self._active_envs = mask
         self._next_sol_idxs *= mask.cpu().view(-1)
 
-    # TODO(YCC): get the next skill by different mode
     def get_next_skill(
         self,
         observations,
@@ -96,13 +132,18 @@ class LLMHighLevelReflectPolicy(HighLevelPolicy):
         skill_args_data = [None for _ in range(batch_size)]
         immediate_end = torch.zeros(batch_size, dtype=torch.bool)
 
+        # TODO(YCC): step as pddl solution or learn a new skill
         for batch_idx, should_plan in enumerate(plan_masks):
             if should_plan != 1.0:
                 continue
-            if self.step_mode == 'llm':
-            # Query the LLM agent with the current observations
-            # to get the next action and arguments
-                llm_output = self._llm_agent.chat(content=str(observations[batch_idx]), user_prompt=user_prompt[1], mode="llm_step")
+            llm_output = self._llm_agent.chat(
+                content=str(observations[batch_idx]), 
+                user_prompt=user_prompt[2], 
+                assistant_prompt=assistant_prompt[2], 
+            )
+            step_mode, reward_design, measure = self.split_plan()
+            if step_mode == 'llm':
+                # TODO(YCC): learn a new skill with the LLM Feedback
                 if llm_output is None:
                     next_skill[batch_idx] = self._skill_name_to_idx["wait"]
                     skill_args_data[batch_idx] = ["1"]
@@ -119,8 +160,7 @@ class LLMHighLevelReflectPolicy(HighLevelPolicy):
                     next_skill[batch_idx] = self._skill_name_to_idx["wait"]
                     skill_args_data[batch_idx] = ["1"]
 
-            elif self.step_mode == 'pddl':
-                llm_output = self._llm_agent.chat(content=str(observations[batch_idx]), user_prompt=user_prompt[1], assistant_prompt=assistant_prompt[1], mode="pddl_step")
+            elif step_mode == 'pddl':
                 use_idx = self._get_next_sol_idx(batch_idx, immediate_end)
 
                 skill_name, skill_args = self._solution_actions[batch_idx][
@@ -139,7 +179,7 @@ class LLMHighLevelReflectPolicy(HighLevelPolicy):
 
                 self._next_sol_idxs[batch_idx] += 1
             else:
-                raise ValueError(f"Invalid step mode: {self.step_mode}, select step mode between llm and pddl.")               
+                raise ValueError(f"Invalid step mode: {step_mode}.")               
 
         return (
             next_skill,
@@ -233,3 +273,27 @@ class LLMHighLevelReflectPolicy(HighLevelPolicy):
         return torch.zeros(rnn_hidden_states.shape[0], 1).to(
             rnn_hidden_states.device
         )
+
+    def user_prompt_initialize(self, envs_text_context = None, pddl_def: str = None, task_description: str = None):
+
+        # split the scene description and robot resume
+        scene_descript, robot_res = envs_text_context['scene_description'], envs_text_context['robot_resume']
+
+        env_prompt = user_prompt[0].replace("[SCENE DESCRIPTION]", scene_descript)
+        env_prompt = env_prompt.replace("[ROBOT RESUME]", robot_res)
+    
+        env_prompt = env_prompt.replace("[PDDL DEFINITIONS]", str(pddl_def))
+
+        goal_specify = user_prompt[1].replace("[TASK DICT YES]", task_dict[0])
+        goal_specify = goal_specify.replace("[TASK DICT NO]", task_dict[1])
+
+        return env_prompt, goal_specify
+
+    def string_dict_format(self, string):
+        
+        str_to_dict = re.sub(r'\s+', ' ', string).strip()
+        str_to_dict = str_to_dict.replace("'", '"')
+        str_to_dict = re.sub(r'(?<!\\)""', '"', str_to_dict)
+        response_dict = json.loads(str_to_dict)
+
+        return response_dict

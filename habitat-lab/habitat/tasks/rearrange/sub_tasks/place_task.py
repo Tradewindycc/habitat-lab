@@ -19,8 +19,8 @@ class RearrangePlaceTaskV1(RearrangePickTaskV1):
         # Never allow regrasping
         return (
             not self._sim.grasp_mgr.is_grasped
-            and action_args.get("grip_action", None) is not None
-            and action_args["grip_action"] >= 0
+            and action_args.get("grip_place_action", None) is not None
+            and action_args["grip_place_action"] >= 0
         )
 
     def reset(self, episode: Episode):

@@ -17,6 +17,7 @@ def _try_register_rearrange_task():
     import habitat.tasks.rearrange.actions.drone_actions
     import habitat.tasks.rearrange.actions.habitat_mas_actions
     import habitat.tasks.rearrange.actions.oracle_arm_action
+    import habitat.tasks.rearrange.actions.reset_action
     import habitat.tasks.rearrange.multi_agent_sensors
     import habitat.tasks.rearrange.multi_task.pddl_sensors
     import habitat.tasks.rearrange.multi_task.pddl_task
@@ -39,6 +40,6 @@ def _try_register_rearrange_task():
 
     # Try register habitat-mas sensors and measures
     try:
-        import habitat_mas.tasks.habitat_mas_sensors 
+        import habitat_mas.tasks.habitat_mas_sensors
     except ImportError as e:
         print(f"Habitat-mas task import error: {e}")

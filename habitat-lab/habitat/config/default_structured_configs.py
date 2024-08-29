@@ -298,19 +298,55 @@ class ArmActionConfig(ActionConfig):
     auto_grasp: bool = False
 
 @dataclass
-class OracleArmActionConfig(ArmActionConfig):
+class ArmPickActionConfig(ArmActionConfig):
+    type: str = "ArmPickAction"
+    arm_controller: str = "OraclePickAction"
+    grip_controller: str = "SuctionGraspAction"
+
+@dataclass
+class ArmPlaceActionConfig(ArmActionConfig):
+    type: str = "ArmPlaceAction"
+    arm_controller: str = "OraclePlaceAction"
+    grip_controller: str = "SuctionGraspAction"
+
+@dataclass
+class OraclePickActionConfig(ArmActionConfig):
     r"""
     In Rearrangement tasks only, the action that will move the robot arm around. The action represents to delta angle (in radians) of each joint.
     Use pybullet IK planner to control the arm action.
     """
-    type: str = "ArmAction"
+    type: str = "ArmPickAction"
     arm_controller: str = "OraclePickAction"
     grip_controller: str = "SuctionGraspAction"
     grasp_thresh_dist: float = 0.0
     render_ee_target: bool = True
 
 @dataclass
-class StretchOracleArmActionConfig(ArmActionConfig):
+class OraclePlaceActionConfig(ArmActionConfig):
+    r"""
+    In Rearrangement tasks only, the action that will move the robot arm around. The action represents to delta angle (in radians) of each joint.
+    Use pybullet IK planner to control the arm action.
+    """
+    type: str = "ArmPlaceAction"
+    arm_controller: str = "OraclePlaceAction"
+    grip_controller: str = "SuctionGraspAction"
+    grasp_thresh_dist: float = 0.0
+    render_ee_target: bool = True
+
+@dataclass
+class ResetArmActionConfig(ArmActionConfig):
+    r"""
+    In Rearrangement tasks only, the action that will move the robot arm around. The action represents to delta angle (in radians) of each joint.
+    Use pybullet IK planner to control the arm action.
+    """
+    type: str = "ResetArmAction"
+    arm_controller: str = "OracleResetArmAction"
+    grip_controller: str = "SuctionGraspAction"
+    grasp_thresh_dist: float = 0.0
+    render_ee_target: bool = True
+
+@dataclass
+class StretchOraclePickActionConfig(ArmActionConfig):
     r"""
     In Rearrangement tasks only, the action that will move the robot arm around. The action represents to delta angle (in radians) of each joint.
     Use pybullet IK planner to control the arm action.
@@ -361,7 +397,7 @@ class BaseVelocityNonCylinderActionConfig(ActionConfig):
     # is more than collision_threshold for any point.
     collision_threshold: float = 1e-5
     # The x and y locations of the clamped NavMesh position
-    navmesh_offset: Optional[List[List[float]]] = None
+    navmesh_offset: Optional[List[List[float]]] = field(default_factory=lambda:[[0.0, 0.0], [0.25, 0.0], [-0.25, 0.0]])
     # If we allow the robot to move laterally.
     enable_lateral_move: bool = False
     # If the condition of sliding includes the checking of rotation
@@ -459,7 +495,7 @@ class OracleNavActionConfig(ActionConfig):
     # is more than collision_threshold for any point.
     collision_threshold: float = 1e-5
     # The x and y locations of the clamped NavMesh position
-    navmesh_offset: Optional[List[List[float]]] = None
+    navmesh_offset: Optional[List[List[float]]] = field(default_factory=lambda:[[0.0, 0.0], [0.25, 0.0], [-0.25, 0.0]])
     # If we allow the robot to move laterally.
     enable_lateral_move: bool = False
     # If the condition of sliding includs the checking of rotation
@@ -817,6 +853,17 @@ class ObjectGoalConfig(LabSensorConfig):
 class ArmWorkspaceRGBSensorConfig(LabSensorConfig):
     uuid: str = "arm_workspace_rgb"
     type: str = "ArmWorkspaceRGBSensor"
+    agent_idx: int = 0
+    pixel_threshold: int = 10
+    height: int = 480
+    width: int = 640
+    rgb_sensor_name: str = "head_rgb"
+    depth_sensor_name: str = "head_depth"
+
+@dataclass
+class NavWorkspaceRGBSensorConfig(LabSensorConfig):
+    uuid: str = "nav_workspace_rgb"
+    type: str = "NavWorkspaceRGBSensor"
     agent_idx: int = 0
     pixel_threshold: int = 10
     height: int = 480
@@ -2109,11 +2156,9 @@ class DatasetConfig(HabitatBaseConfig):
         "habitat-test-scenes/v1/{split}/{split}.json.gz"
     )
     # TODO(YCC): load robot config
-    mode: str = ""
+    mode: str = "test"
     randomize_agent_start: int = 1
-    robot_config: str = (
-        "data/robots/json/{mode}.json"
-    )
+    robot_config: str = ""
 
 
 @dataclass
@@ -2150,6 +2195,9 @@ class HabitatConfig(HabitatBaseConfig):
     task: TaskConfig = MISSING
     dataset: DatasetConfig = MISSING
     gym: GymConfig = GymConfig()
+
+    # task description for LLM to plan
+    task_description: Optional[str] = None
 
 
 # -----------------------------------------------------------------------------
@@ -2222,14 +2270,38 @@ cs.store(
 cs.store(
     package="habitat.task.actions.arm_action",
     group="habitat/task/actions",
-    name="oracle_arm_action",
-    node=OracleArmActionConfig,
+    name="arm_pick_action",
+    node=ArmPickActionConfig,
+)
+cs.store(
+    package="habitat.task.actions.arm_action",
+    group="habitat/task/actions",
+    name="arm_reset_action",
+    node=ResetArmActionConfig,
+)
+cs.store(
+    package="habitat.task.actions.arm_action",
+    group="habitat/task/actions",
+    name="arm_place_action",
+    node=OraclePlaceActionConfig,
+)
+cs.store(
+    package="habitat.task.actions.arm_action",
+    group="habitat/task/actions",
+    name="arm_pick_action",
+    node=OraclePickActionConfig,
+)
+cs.store(
+    package="habitat.task.actions.arm_action",
+    group="habitat/task/actions",
+    name="arm_place_action",
+    node=OraclePlaceActionConfig,
 )
 cs.store(
     package="habitat.task.actions.arm_action",
     group="habitat/task/actions",
     name="stretch_oracle_arm_action",
-    node=StretchOracleArmActionConfig,
+    node=StretchOraclePickActionConfig,
 )
 
 cs.store(
@@ -2675,6 +2747,12 @@ cs.store(
     group="habitat/task/lab_sensors",
     name="arm_workspace_rgb_sensor",
     node=ArmWorkspaceRGBSensorConfig
+)
+cs.store(
+    package="habitat.task.lab_sensors.nav_workspace_rgb_sensor",
+    group="habitat/task/lab_sensors",
+    name="nav_workspace_rgb_sensor",
+    node=NavWorkspaceRGBSensorConfig
 )
 cs.store(
     package="habitat.task.lab_sensors.arm_workspace_rgb_arm_sensor",

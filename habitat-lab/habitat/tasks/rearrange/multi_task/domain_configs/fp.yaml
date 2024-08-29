@@ -252,3 +252,11 @@ actions:
       config_args:
         task.force_regenerate: True
         task.should_save_to_cache: False
+  
+  # Reset robot arm action      
+  - name: reset_arm
+    parameters:
+      - name: robot
+        expr_type: robot_entity_type
+    precondition: null
+    postcondition: []

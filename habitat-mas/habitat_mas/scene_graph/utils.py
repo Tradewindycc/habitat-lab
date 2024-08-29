@@ -6,7 +6,7 @@ import open3d as o3d
 import quaternion as qt
 import networkx as nx
 
-from habitat.datasets.rearrange.samplers.receptacle import get_navigable_receptacles, find_receptacles
+from habitat.datasets.rearrange.samplers.receptacle import find_receptacles, parse_receptacles_from_user_config
 from habitat_sim.utils.common import quat_from_two_vectors, quat_to_coeffs
 from matplotlib import pyplot as plt
 from scipy.spatial.transform import Rotation as R
@@ -194,25 +194,61 @@ def generate_agents_description(agent_layer, region_layer, nav_mesh):
     
     return agent_description
 
+
+#TODO(YCC): specify the type of the receptacle: static or articulated
 def gernerate_receptacles_description(sim):
     receptacle_description = ""
     all_receptacles = find_receptacles(sim)
-    all_navigable_receps = get_navigable_receptacles(sim, all_receptacles, -1)
-    recep_dict = {}
+    # all_navigable_receps = get_navigable_receptacles(sim, all_receptacles, -1)
+    recep_dict = {
+        "target": {},
+        "goal": {}
+    }
+    target_receps, goal_receps = [], []
+    for i in range(len(sim.ep_info.target_receptacles)):
+        target_recep = sim.ep_info.target_receptacles[i][0]
+        target_receps.append(target_recep)
+        recep_dict["target"][target_recep] = []
+    for i in range(len(sim.ep_info.goal_receptacles)):
+        goal_recep = sim.ep_info.goal_receptacles[i][0]
+        goal_receps.append(goal_recep)
+        recep_dict["goal"][goal_recep] = []
 
-    for receptacle in all_navigable_receps:
-        if receptacle.parent_object_handle not in recep_dict:
-            recep_dict[receptacle.parent_object_handle] = [receptacle.name]
-        else:
-            recep_dict[receptacle.parent_object_handle].append(receptacle.name)
-            # recep_dict[receptacle.parent_object_handle].append(receptacle.unique_name)
-    recep_object_num = len(recep_dict)
-    receptacles_num = len(all_navigable_receps)
-    receptacle_description += "There are {} receptacle objects in the scene. ".format(recep_object_num)
-    receptacle_description += "And there are {} navigable receptacle targets on them where object can be placed. ".format(receptacles_num)
+    obj_mgr = sim.get_rigid_object_manager()
+    ao_mgr = sim.get_articulated_object_manager()
 
-    for parent_handle, receptacle_names in recep_dict.items():
-        receptacle_description += f"{parent_handle} contains the following receptacles: {receptacle_names}. "
+    for receptacle in all_receptacles:
+        for target_recep_handle in target_receps:
+            if receptacle.parent_object_handle == target_recep_handle:
+                recep_dict["target"][target_recep_handle].append(receptacle.name)
+                tar_recep = obj_mgr.get_object_by_handle(target_recep_handle)
+                target_receptacle = parse_receptacles_from_user_config(
+                    tar_recep.user_attributes,
+                    parent_object_handle=tar_recep.handle,
+                    parent_template_directory=tar_recep.creation_attributes.file_directory,
+                )
+
+        for goal_recep_handle in goal_receps:
+            if receptacle.parent_object_handle == goal_recep_handle:
+                recep_dict["goal"][goal_recep_handle].append(receptacle.name)
+                goal_recep = obj_mgr.get_object_by_handle(goal_recep_handle)
+                goal_receptacle = parse_receptacles_from_user_config(
+                    goal_recep.user_attributes,
+                    parent_object_handle=goal_recep.handle,
+                    parent_template_directory=goal_recep.creation_attributes.file_directory,
+                )
+
+
+    tar_recep_num = len(recep_dict["target"])
+    goal_recep_num = len(recep_dict["goal"])
+
+    receptacle_description += "There are {} target receptacles and {} goal receptacles in the scene. ".format(tar_recep_num, goal_recep_num)
+    receptacle_description += "For target receptacles:"
+    for parent_handle, receptacle_names in recep_dict['target'].items():
+        receptacle_description += f"{parent_handle} contains the following places to place object: {receptacle_names}. "
+    receptacle_description += "For goal receptacles:"
+    for parent_handle, receptacle_names in recep_dict['goal'].items():
+        receptacle_description += f"{parent_handle} contains the following places to place object: {receptacle_names}. "
     return receptacle_description
 
 ############ Visualization ############################

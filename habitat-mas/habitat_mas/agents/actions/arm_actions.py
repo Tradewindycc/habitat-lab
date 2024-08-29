@@ -27,3 +27,11 @@ def place(target_obj: str, target_location: str):
         target_location: The location to place the object.
     """
     pass
+
+
+@action
+def reset_arm():
+    """
+    Reset Arm.
+    """
+    pass

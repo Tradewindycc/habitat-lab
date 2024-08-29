@@ -21,7 +21,10 @@ stage_goals:
       - holding(any_targets|0, robot_0)
 
 solution:
+  - reset_arm(robot_0)
   - nav_to_goal(any_targets|0, robot_0)
   - pick(any_targets|0, robot_0)
+  - reset_arm(robot_0)
   - nav_to_obj(TARGET_any_targets|0, robot_0)
   - place(any_targets|0,TARGET_any_targets|0, robot_0)
+  - reset_arm(robot_0)

@@ -19,6 +19,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import magnum as mn
 import numpy as np
 from tqdm import tqdm
+import traceback
 
 import habitat.datasets.rearrange.samplers as samplers
 import habitat.sims.habitat_simulator.sim_utilities as sutils
@@ -459,56 +460,63 @@ class RearrangeEpisodeGenerator:
         """
         generated_episodes: List[RearrangeEpisode] = []
         failed_episodes = 0
+        total_episodes = 0
         if verbose:
             pbar = tqdm(total=num_episodes)
         while len(generated_episodes) < num_episodes:
+            logger.info(f"Generating... succeeded / total: {len(generated_episodes)} / {total_episodes}")
+            total_episodes += 1
             try:
                 self._scene_sampler.set_cur_episode(len(generated_episodes))
                 new_episode = self.generate_single_episode()
+                if new_episode is None:
+                    continue
                 rigid_objs = new_episode.rigid_objs
                 target_objs = new_episode.targets
+                if resume is not None:
+                    cameras_info = resume['perception']['cameras_info']
+                    arm_workspace = resume['manipulation']['arm_workspace']
+                    mobility_summary = resume['mobility']['summary']
 
-                cameras_info = resume['perception']['cameras_info']
-                arm_workspace = resume['manipulation']['arm_workspace']
-                mobility_summary = resume['mobility']['summary']
-
-                # TODO(ZXZ): modify episode generation algorithm
+                # TODO(zxz): modify episode generation algorithm
                 if episode_type == 'perception':
                     # beyond SPOT robot's reach
-                    camera_heights = []
-                    for camera_name, properties in cameras_info.items():
-                        camera_heights.append(properties["height"])
                     for obj in rigid_objs:
                         transform = obj[1]
-                        scope = 0.2
                         # if SPOT can detect or DRONE can't, then drop the episode
-                        if (transform[1][3] < 0.577000006318092 + scope or
-                                transform[1][3] > 1.5 + scope):
+                        if (transform[1][3] < 1.0):
+                            logger.error("Drop episode...")
                             new_episode = None
+                            break
                 elif episode_type == 'manipulation':
                     # beyond STRETCH robot's reach
                     # if STRETCH can pick and FETCH can't, then drop the episode
                     for rigid_obj in rigid_objs:
-                        if (rigid_obj[1][1][3] < 0.89043515920639 or
+                        if (0.2 < rigid_obj[1][1][3] < 1.0 or
                                 rigid_obj[1][1][3] > 1.8497142791748):
+                            logger.error("Drop episode...")
                             new_episode = None
-                    # if STRETCH can place and FETCH can't, then drop the episode
-                    # for obj, pos in target_objs.items():
-                    #     if (pos[1][3] < 0.89043515920639 or
-                    #             pos[1][3] > 1.8497142791748):
-                    #         new_episode = None
+                            break
+                elif episode_type == 'hssd':
+                    for rigid_obj in rigid_objs:
+                        if (0.4 < rigid_obj[1][1][3] < 0.8 or
+                                rigid_obj[1][1][3] > 1.8497142791748):
+                            logger.error("Drop episode...")
+                            new_episode = None
+                            break
                 elif episode_type == 'mobility':
                     pass
 
                 else:
                     raise ValueError(f"Unknown type: {episode_type}")
 
-            except Exception:
+            except Exception as e:
                 new_episode = None
+                trace = traceback.format_exc()
+                logger.error(f"An error occurred: {trace}")
                 logger.error("Generation failed with exception...")
             if new_episode is None:
                 failed_episodes += 1
-                logger.error("Episode is None due to drop...")
                 continue
             generated_episodes.append(new_episode)
             if verbose:

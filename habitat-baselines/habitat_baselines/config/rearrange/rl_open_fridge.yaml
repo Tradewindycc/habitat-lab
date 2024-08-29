@@ -15,7 +15,8 @@ habitat_baselines:
   video_dir: "video_dir/open_fridge"
   video_fps: 30
   test_episode_count: -1
-  eval_ckpt_path_dir: "data/datasets/open_fridge/checkpoints"
+  checkpoint_folder: "data/datasets/open_fridge/checkpoints"
+  eval_ckpt_path_dir: "data/datasets/open_fridge/checkpoints/latest.pth"
   # 26 environments will just barely be below 16gb.
   # num_environments: 26
   # 18 environments will just barely be below 11gb.
@@ -28,8 +29,10 @@ habitat_baselines:
   # this improves performance considerably
   force_torch_single_threaded: True
   eval_keys_to_include_in_name: ["reward", "force", "success"]
+  load_resume_state_config: False
 
   eval:
+    should_load_ckpt: True
     video_option: ["disk"]
 
   rl:

@@ -1865,3 +1865,87 @@ class ObjectMasksSensor(UsesArticulatedAgentInterface, Sensor):
 
         return masked_rgb
 
+
+@registry.register_sensor
+class NavWorkspaceRGBSensor(ArmWorkspaceRGBSensor, UsesArticulatedAgentInterface, Sensor):
+    """ Sensor to visualize the reachable workspace of an articulated arm """
+    cls_uuid: str = "nav_workspace_rgb"
+
+    def __init__(self, sim, config, *args, **kwargs):
+        super().__init__(sim=sim, config=config)
+
+    def _get_uuid(self, *args, **kwargs):
+        return NavWorkspaceRGBSensor.cls_uuid
+
+    def _is_reachable(self, point):
+        agent_pos = self._sim.get_agent_data(self.agent_id).articulated_agent.base_pos
+
+        path = habitat_sim.ShortestPath()
+        path.requested_start = agent_pos
+        path.requested_end = point
+        found_path = self._sim.pathfinder.find_path(path)
+
+        return found_path
+
+    def get_observation(self, observations, *args, **kwargs):
+        """ Get the RGB image with reachable and unreachable points marked """
+
+        if self.agent_id is not None:
+            depth_obs = observations[f"agent_{self.agent_id}_{self.depth_sensor_name}"]
+            rgb_obs = observations[f"agent_{self.agent_id}_{self.rgb_sensor_name}"]
+            depth_camera_name = f"agent_{self.agent_id}_{self.depth_sensor_name}"
+        else:
+            depth_obs = observations[self.depth_sensor_name]
+            rgb_obs = observations[self.rgb_sensor_name]
+            depth_camera_name = self.depth_sensor_name
+
+        rgb_obs = np.ascontiguousarray(rgb_obs)
+        depth_obs = np.ascontiguousarray(depth_obs)
+
+        # Reproject depth pixels to 3D points
+        pcl_o3d = self._rgbd_to_point_cloud(
+            rgb_obs,
+            depth_obs,
+            self._get_camera_info(depth_camera_name),
+            self._get_camera_extrinsic(depth_camera_name)
+        )
+        # downsample the point cloud
+        down_sampled_points_xyz = np.asarray(
+            pcl_o3d.voxel_down_sample(voxel_size=self.down_sample_voxel_size).points
+        )
+        # TODO(zxz): test z-coordinate of pathfinder
+        down_sampled_points_xyz = down_sampled_points_xyz[down_sampled_points_xyz[:, 1] >= 0.57]
+        # down_sampled_points_xyz = down_sampled_points_xyz[down_sampled_points_xyz[:, 1] <= -2.4]
+
+        # Check reachability and color points
+        colors = []
+        for point in down_sampled_points_xyz:
+            reachable = self._is_reachable(point)
+            # Green if reachable, red if not
+            colors.append([0, 255, 0] if reachable else [255, 0, 0])
+
+        # Project the points to the image and color the pixels with circles
+        pixel_coords = self._project_points_to_image(
+            down_sampled_points_xyz,
+            self._get_camera_info(depth_camera_name),
+            self._get_camera_extrinsic(depth_camera_name)
+        )
+        for pixel_coord, color in zip(pixel_coords, colors):
+            x, y = pixel_coord.astype(int)
+            cv2.circle(rgb_obs, (x, y), 2, color, -1)
+
+        if self._debug_tf:
+            # save accumulated point cloud and clear list
+            self.pcl_o3d_list.append(pcl_o3d)
+            if len(self.pcl_o3d_list) > 5:
+                # merge point clouds
+                pcl_o3d = o3d.geometry.PointCloud()
+                for pcl in self.pcl_o3d_list:
+                    pcl_o3d += pcl
+
+                # save point cloud and clear list
+                o3d.io.write_point_cloud("debug_pcl_{}.ply".format(self._debug_save_counter), pcl_o3d)
+                self.pcl_o3d_list = []
+                self._debug_save_counter += 1
+
+        return rgb_obs

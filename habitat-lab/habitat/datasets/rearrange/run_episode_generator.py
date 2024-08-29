@@ -400,17 +400,16 @@ if __name__ == "__main__":
             import time
             import json
 
+            resume = None
             if args.resume is not None:
                 assert osp.exists(
                     args.resume
                 ), f"Provided resume, '{args.resume}', does not exist."
+                with open(args.resume, 'r', encoding='utf-8') as file:
+                    resume = json.load(file)
 
             start_time = time.time()
 
-            with open(args.resume, 'r', encoding='utf-8') as file:
-                resume = json.load(file)
-            if resume is None:
-                raise ValueError(f"None input: {args.type}")
             dataset.episodes += ep_gen.generate_episodes(
                 args.num_episodes, args.verbose, args.type, resume
             )

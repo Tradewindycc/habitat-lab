@@ -384,3 +384,114 @@ class ArtObjReward(RearrangeReward):
         self._prev_ee_dist_to_marker = cur_ee_dist_to_marker
         self._prev_art_state = link_state
         self._metric = reward
+
+@registry.register_measure
+class OpenFridgeReward(ArtObjReward):
+    cls_uuid = "open_fridge_reward"
+    def __init__(self, *args, sim, config, task, **kwargs):
+        self._metric = None
+
+        super().__init__(*args, sim=sim, config=config, task=task, **kwargs)
+
+    def reset_metric(self, *args, episode, task, observations, **kwargs):
+        task.measurements.check_measure_dependencies(
+            self.uuid,
+            [
+                ArtObjState.cls_uuid,
+                ArtObjSuccess.cls_uuid,
+                EndEffectorToRestDistance.cls_uuid,
+                ArtObjAtDesiredState.cls_uuid,
+            ],
+        )
+        link_state = task.measurements.measures[
+            ArtObjState.cls_uuid
+        ].get_metric()
+
+        dist_to_marker = task.measurements.measures[
+            EndEffectorDistToMarker.cls_uuid
+        ].get_metric()
+
+        ee_to_rest_distance = task.measurements.measures[
+            EndEffectorToRestDistance.cls_uuid
+        ].get_metric()
+
+        self._prev_art_state = link_state
+        self._any_has_grasped = task._sim.grasp_mgr.is_grasped
+        self._prev_ee_dist_to_marker = dist_to_marker
+        self._prev_ee_to_rest = ee_to_rest_distance
+        self._any_at_desired_state = False
+        super().reset_metric(
+            *args,
+            episode=episode,
+            task=task,
+            observations=observations,
+            **kwargs
+        )
+
+    def update_metric(self, *args, episode, task, observations, **kwargs):
+        super().update_metric(
+            *args,
+            episode=episode,
+            task=task,
+            observations=observations,
+            **kwargs
+        )
+        reward = self._metric
+        link_state = task.measurements.measures[
+            ArtObjState.cls_uuid
+        ].get_metric()
+
+        ee_to_rest_distance = task.measurements.measures[
+            EndEffectorToRestDistance.cls_uuid
+        ].get_metric()
+
+        is_art_obj_state_succ = task.measurements.measures[
+            ArtObjAtDesiredState.cls_uuid
+        ].get_metric()
+
+        cur_dist = abs(link_state - task.success_js_state)
+        prev_dist = abs(self._prev_art_state - task.success_js_state)
+
+        # Dense reward to the target articulated object state.
+        dist_diff = prev_dist - cur_dist
+        if not is_art_obj_state_succ:
+            reward += self._config.art_dist_reward * dist_diff
+
+        cur_has_grasped = task._sim.grasp_mgr.is_grasped
+
+        cur_ee_dist_to_marker = task.measurements.measures[
+            EndEffectorDistToMarker.cls_uuid
+        ].get_metric()
+        if cur_has_grasped and not self._any_has_grasped:
+            if task._sim.grasp_mgr.snapped_marker_id != task.use_marker_name:
+                # Grasped wrong marker
+                reward -= self._config.wrong_grasp_pen
+                if self._config.wrong_grasp_end:
+                    rearrange_logger.debug(
+                        "Grasped wrong marker, ending episode."
+                    )
+                    task.should_end = True
+            else:
+                # Grasped right marker
+                reward += self._config.grasp_reward
+            self._any_has_grasped = True
+
+        if is_art_obj_state_succ:
+            if not self._any_at_desired_state:
+                reward += self._config.art_at_desired_state_reward
+                self._any_at_desired_state = True
+            # Give the reward based on distance to the resting position.
+            ee_dist_change = self._prev_ee_to_rest - ee_to_rest_distance
+            reward += self._config.ee_dist_reward * ee_dist_change
+        elif not cur_has_grasped:
+            # Give the reward based on distance to the handle
+            dist_diff = self._prev_ee_dist_to_marker - cur_ee_dist_to_marker
+            reward += self._config.marker_dist_reward * dist_diff
+
+        self._prev_ee_to_rest = ee_to_rest_distance
+
+        self._prev_ee_dist_to_marker = cur_ee_dist_to_marker
+        self._prev_art_state = link_state
+        self._metric = reward
+
+        

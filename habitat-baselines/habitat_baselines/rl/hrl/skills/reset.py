@@ -1,32 +1,56 @@
 # Copyright (c) Meta Platforms, Inc. and its affiliates.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-
+import os.path as osp
 from typing import List, Tuple
+from dataclasses import dataclass
 
-import gym.spaces as spaces
+from gym import spaces
 import numpy as np
 import torch
 
-from habitat_baselines.rl.hrl.skills.skill import SkillPolicy
+from habitat.core.spaces import ActionSpace
+
+from habitat_baselines.common.logging import baselines_logger
+from habitat_baselines.rl.hrl.skills.nn_skill import NnSkillPolicy
 from habitat_baselines.rl.hrl.utils import find_action_range
 from habitat_baselines.rl.ppo.policy import PolicyActionData
 
 
-class ResetArmSkill(SkillPolicy):
+class ResetArmSkill(NnSkillPolicy):
+    """
+    Skill to reset the arm to its initial position.
+    """
+    RESET_ID = 3
+
+    @dataclass
+    class ResetArmActionArgs:
+        """
+        :property action_idx: The index of the oracle action we want to execute
+        :property grab_release: Whether we want to grab (1) or drop an object (0)
+        """
+        action_idx: int
+
     def __init__(
         self,
+        wrap_policy,
         config,
-        action_space: spaces.Space,
+        action_space,
+        filtered_obs_space,
+        filtered_action_space,
         batch_size,
     ):
-        super().__init__(config, action_space, batch_size, True)
-        self._rest_state = np.array(
-            [float(x) for x in config.reset_joint_state]
+        super().__init__(
+            wrap_policy,
+            config,
+            action_space,
+            filtered_obs_space,
+            filtered_action_space,
+            batch_size,
         )
-
-        self._arm_ac_range = find_action_range(action_space, "arm_action")
-        self._arm_ac_range = (self._arm_ac_range[0], self._rest_state.shape[0])
+        self.is_init = False
+        action_name = "arm_reset_action"
+        self._reset_srt_idx, self._reset_end_idx = find_action_range(action_space, action_name)
 
     def on_enter(
         self,
@@ -46,11 +70,26 @@ class ResetArmSkill(SkillPolicy):
             skill_name,
         )
 
-        self._initial_delta = (
-            self._rest_state - observations["joint"].cpu().numpy()
-        )
-
         return ret
+
+    @classmethod
+    def from_config(
+        cls, config, observation_space, action_space, batch_size, full_config
+    ):
+        filtered_action_space = ActionSpace(
+            {config.action_name: action_space[config.action_name]}
+        )
+        baselines_logger.debug(
+            f"Loaded action space {filtered_action_space} for skill {config.skill_name}"
+        )
+        return cls(
+            None,
+            config,
+            action_space,
+            observation_space,
+            filtered_action_space,
+            batch_size,
+        )
 
     def _parse_skill_arg(self, skill_name: str, skill_arg: str):
         return None
@@ -66,10 +105,10 @@ class ResetArmSkill(SkillPolicy):
 
         return (
             torch.as_tensor(
-                np.abs(current_joint_pos - self._rest_state).max(-1),
+                np.abs(current_joint_pos - self._init_joint_pos).max(-1),
                 dtype=torch.float32,
             )
-            < 5e-2
+            < 0.01
         )
 
     def _internal_act(
@@ -82,23 +121,16 @@ class ResetArmSkill(SkillPolicy):
         deterministic=False,
     ):
         current_joint_pos = observations["joint"].cpu().numpy()
-        delta = self._rest_state - current_joint_pos
+        if not self.is_init:
+            self._init_joint_pos = current_joint_pos
+            self.is_init = True
 
-        # Dividing by max initial delta means that the action will
-        # always in [-1,1] and has the benefit of reducing the delta
-        # amount was we converge to the target.
-        delta = delta / np.maximum(
-            self._initial_delta[cur_batch_idx].max(-1, keepdims=True), 1e-5
+        full_action = torch.zeros(
+            (masks.shape[0], self._full_ac_size), device=masks.device
         )
 
-        action = torch.zeros_like(prev_actions)
-        # There is an extra grab action that we don't want to set.
-        action[
-            ..., self._arm_ac_range[0] : self._arm_ac_range[1]
-        ] = torch.from_numpy(delta).to(
-            device=action.device, dtype=action.dtype
-        )
+        full_action[0][self._reset_srt_idx:self._reset_end_idx] = torch.tensor([self.RESET_ID])
 
         return PolicyActionData(
-            actions=action, rnn_hidden_states=rnn_hidden_states
+            actions=full_action, rnn_hidden_states=rnn_hidden_states
         )
