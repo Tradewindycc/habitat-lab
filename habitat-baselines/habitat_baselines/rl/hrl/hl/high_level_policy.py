@@ -162,7 +162,7 @@ class HighLevelPolicy(nn.Module):
         """
 
         # In the PDDL domain, the agents are referred to as robots.
-        robot_id = "robot_" + self._agent_name.split("_")[1]
+        robot_id = "agent_" + self._agent_name.split("_")[1]
 
         if robot_id in self._pddl_prob.all_entities:
             # There are potentially multiple robots and we need to filter by

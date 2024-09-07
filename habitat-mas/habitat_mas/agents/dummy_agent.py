@@ -24,29 +24,29 @@ class DummyAgent:
             #     "name": "nav_to_obj",
             #     "arguments": {
             #         "target_obj": "any_targets|0",
-            #         "robot_"+index: "robot_"+index,
+            #         "robot": "agent_0",
+            #     }
+            # },
+            # {
+            #     "name": "nav_to_goal",
+            #     "arguments": {
+            #         "target_obj": "any_targets|0",
+            #         "robot": "agent_0",
             #     }
             # },
             {
-                "name": "nav_to_goal",
-                "arguments": {
-                    "target_obj": "any_targets|"+index,
-                    "robot_"+index: "robot_"+index,
-                }
-            },
-            {
                 "name": "pick",
                 "arguments": {
-                    "any_targets|"+index: "any_targets|"+index,
-                    "robot_"+index: "robot_"+index,
+                    "target_obj": "any_targets|0",
+                    "robot": "agent_0",
                 }
             },
             # {
             #     "name": "place",
             #     "arguments": {
-            #         "any_targets|0": "any_targets|0",
-            #         "TARGET_any_targets|0": "TARGET_any_targets|0",
-            #         robot: robot,
+            #         "target_obj": "any_targets|0",
+            #         "target_location": "TARGET_any_targets|0",
+            #         "robot": "agent_0",
             #     }
             # },
             ]

@@ -160,18 +160,35 @@ def generate_region_objects_description(region_layer, region_id):
         
     return description
 
-def generate_objects_description(object_layer):
+def generate_objects_description(sim, object_layer):
     """
     Generate description of objects, used when region layer is empty 
     """
     description = "There are {} objects in the scene.\n".format(len(object_layer.obj_ids))
     for obj_id in object_layer.obj_ids:
         obj = object_layer.obj_dict[obj_id]
-        obj_name = obj.full_name
+        obj_name = sim._handle_to_goal_name[obj.full_name]
         if obj.full_name is None:
-            obj_name = obj.class_name + "_" + str(obj_id)
-        description += f"{obj_name} is at position {obj.center}.\n"
-    
+            obj_name = "any_targets|" + str(obj_id)
+        description += f"{obj_name} is at position {np.array(obj.center)}. "
+        # add height and distance information
+        description += f"The height of the object is {obj.center[1]}.\n"
+        island_areas = [
+            (island_ix, sim.pathfinder.island_area(island_index=island_ix))
+            for island_ix in range(sim.pathfinder.num_islands)
+        ]
+        horizontal_dist = np.inf
+        for nav_island in range(len(island_areas)):
+            snap_pos = sim.pathfinder.snap_point(obj.center, nav_island)
+            if not np.isnan(snap_pos).any():
+                horizontal_dist = np.linalg.norm(
+                    np.array(snap_pos)[[0, 2]] - np.array(obj.center)[[0, 2]]
+                )
+                break
+        description += f"The horizontal distance of {obj_name} to the nearest navigable point is {horizontal_dist}.\n"
+        if horizontal_dist == np.inf:
+            description += f"`inf` means the pathfinder cannot find any navigable point near the object.\n"
+
     return description
 
 def generate_agents_description(agent_layer, region_layer, nav_mesh):
@@ -182,13 +199,13 @@ def generate_agents_description(agent_layer, region_layer, nav_mesh):
         agent_description = "There are {} agents in the scene.\n".format(len(agent_layer.agent_ids))
         for agent_id in agent_layer.agent_ids:
             agent = agent_layer.agent_dict[agent_id]
-            agent_name = agent.agent_name + "_" + str(agent_id)
+            agent_name = agent.agent_name
             agent_description += f"{agent_name} is at position {agent.position}.\n"
             
     else:
         agents_region_ids = agent_layer.get_agents_region_ids(nav_mesh)
         for agent_id, region_id in agents_region_ids.items():
-            agent_name = agent_layer.agent_dict[agent_id].agent_name + "_" + str(agent_id)
+            agent_name = agent_layer.agent_dict[agent_id].agent_name
             region_name = region_layer.region_dict[region_id].class_name + "_" + str(region_id)
             agent_description += f"{agent_name} is in {region_name}.\n"
     

@@ -143,7 +143,7 @@ if __name__ == "__main__":
     ############ Generate scene description ###########
 
     # Generate scene descriptions
-    objects_description = generate_objects_description(sg.object_layer)
+    objects_description = generate_objects_description(env.sim, sg.object_layer)
     agent_description = generate_agents_description(sg.agent_layer, sg.region_layer, sg.nav_mesh)
         
     # print(region_scene_graph_description)
