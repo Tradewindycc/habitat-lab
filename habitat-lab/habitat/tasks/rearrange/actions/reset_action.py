@@ -41,23 +41,16 @@ class OracleResetArmAction(ArmEEAction, ArticulatedAgentAction):
                     dtype=np.float32,
                 )
 
-    def set_desired_ee_pos(self, ee_pos: np.ndarray) -> None:
-        self.ee_target += np.array(ee_pos)
+    def set_desired_ee_pos(self, joint_pos: np.ndarray) -> None:
+        self.joint_pos_target += np.array(joint_pos)
 
         self.apply_ee_constraints()
 
-        joint_pos = np.array(self.cur_articulated_agent.arm_joint_pos)
-        joint_vel = np.zeros(joint_pos.shape)
-
-        self._ik_helper.set_arm_state(joint_pos, joint_vel)
-
-        des_joint_pos = self._ik_helper.calc_ik(self.ee_target)
-        des_joint_pos = list(des_joint_pos)
         if self.cur_articulated_agent.sim_obj.motion_type == MotionType.DYNAMIC:
-            self.cur_articulated_agent.arm_motor_pos = des_joint_pos
+            self.cur_articulated_agent.arm_motor_pos = self.joint_pos_target
         if self.cur_articulated_agent.sim_obj.motion_type == MotionType.KINEMATIC:
-            self.cur_articulated_agent.arm_joint_pos = des_joint_pos
-            self.cur_articulated_agent.fix_joint_values = des_joint_pos
+            self.cur_articulated_agent.arm_joint_pos = self.joint_pos_target
+            self.cur_articulated_agent.fix_joint_values = self.joint_pos_target
 
     def step(self, pick_action, **kwargs):
         should_reset = pick_action[0]
@@ -72,29 +65,15 @@ class OracleResetArmAction(ArmEEAction, ArticulatedAgentAction):
             # 2) calc_fk is wrong
             # 两个问题：cur_articulated_agent里面的pos和初始的pos不匹配
             # cur_ee_pos = self.cur_articulated_agent.ee_transform().translation
-            cur_ee_pos = self._ik_helper.calc_fk(self.cur_articulated_agent.arm_joint_pos)
+            cur_joint_pos = self.cur_articulated_agent.arm_joint_pos
             if not self.is_reset:
-                self.ee_target = cur_ee_pos
+                self.joint_pos_target = cur_joint_pos
                 self.is_reset = True
-            init_ee_pos = self._ik_helper.calc_fk(self._init_joint_pos)
-            translation = magnum.Vector3(init_ee_pos) - cur_ee_pos
+            joint_pos_diff = self._init_joint_pos - cur_joint_pos
 
             # translation from object to end effector in base frame
-            # translation_base = self.cur_articulated_agent.base_transformation.inverted().transform_vector(translation)
-            translation_base = np.clip(translation, -1, 1)
-            self._ee_ctrl_lim = 0.03
-            translation_base *= self._ee_ctrl_lim
-            self.set_desired_ee_pos(translation_base)
-
-            # DEBUG VISUALIZATION
-            if self._render_ee_target:
-                global_pos = self.cur_articulated_agent.base_transformation.transform_point(
-                    self.ee_target
-                )
-                self._sim.viz_ids["ee_target"] = self._sim.visualize_position(
-                    global_pos, self._sim.viz_ids["ee_target"]
-                )
+            self._ee_ctrl_lim = 0.05
+            joint_pos_diff *= self._ee_ctrl_lim
+            self.set_desired_ee_pos(joint_pos_diff)
         else:
             self.is_reset = False
-
-        return self.ee_target

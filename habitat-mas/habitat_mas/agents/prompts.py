@@ -28,7 +28,7 @@ We will provide with you initial scene description which contains three parts:
 2.Robot resume as robot description.
 3.PDDL definitions which includes the actions you can directly use in the PDDL solution.
 
-The scene description is in the following format:[SCENE DESCRIPTION]
+The scene description is in the following format:[SCENE DESCRIPTION]. For articulated receptacles, the robot can interact with the markers on them; for rigid receptacles, the robot can only pick or place objects on them.
 The robot resume is in the following format:[ROBOT RESUME]
 The PDDL definitions is in the following format:[PDDL DEFINITIONS]
 
@@ -75,34 +75,13 @@ If you choose to design a reward function to learn a new skill: First, you shoul
 
 assistant_prompt = [
 """
-{'robots': [{'robot_name': '...', 'robot_type': '...', 'mobility': '...', 'perception': '...', 'manipulation': '...'}], 'objects': [{'object_id': '...', 'object_type': '...', 'position': [...]}], 'receptacles': [{'receptacle_id': '...', 'receptacle_type': 'target_receptacle', 'target_places': [...]}, {'receptacle_id': '...', 'receptacle_type': 'goal_receptacle', 'goal_places': [...]}], 'actions': [{'action_name': '...', 'parameters': [...]}, ...}]}
+{'robots': [{'robot_name': '...', 'robot_type': '...', 'mobility': '...', 'perception': '...', 'manipulation': '...'}], 'objects': [{'object_id': '...', 'object_type': '...', 'position': [...]}, ...], 'receptacles': [{'receptacle_id': '...', 'receptacle_type': '...', 'target_places': [...]}, ...], 'actions': [{'action_name': '...', 'parameters': [...]}, ...}]}
 """,
 
 """
 {"choice": "...", "task_description": {"name": "...", "description": "..."}, "pddl_problem": {...}, "new_skills": [...]}
 """
 ]
-
-scene_descrip = """
-{
-    'objects_description': 'There are 1 objects in the scene. 013_apple_:0000 is at position Vector(0.49618, 1.41658, 5.46572).', 
-    'agent_description': 'There are 1 agents in the scene. agent_0 is at position [-0.39081627  0.12123175  1.2268406 ].',
-    'receptacles_description': 'There are 2 receptacle objects in the scene. And there are 2 navigable receptacle targets on them where object can be placed. frl_apartment_table_01_:0000 contains the following receptacles: ['receptacle_aabb_Tbl1_Top1_frl_apartment_table_01']. frl_apartment_sofa_01_:0000 contains the following receptacles: ['receptacle_aabb_topleft_frl_apartment_sofa_01']. '
-}
-"""
-
-robot_resume = """
-{
-    "agent_0": 
-        {
-            "robot_id": "FetchRobot_default", 
-            "robot_type": "FetchRobot", 
-            "mobility": {"summary": "The robot has a mobile base with two continuous joints corresponding to left and right wheel links, allowing it to move in a differential drive manner. This enables the robot to navigate across different floors and environments for tasks such as cross-floor object rearrangement and home arrangement."}, 
-            "perception": {"summary": "The robot is equipped with a head-mounted camera system that includes RGB and depth cameras, providing it with detailed visual and spatial information about the environment and objects. This camera setup supports tasks requiring cooperative perception and geometric information collection for effective manipulation.", "cameras_info": {"articulated_agent_arm_camera": {"height": 0.79, "type": "articulated"}, "head_camera": {"height": 1.2, "type": "fixed"}}}, 
-            "manipulation": {"summary": "The robot has a sophisticated arm with multiple degrees of freedom, including prismatic and revolute joints (shoulder, elbow, wrist, gripper). This allows for complex manipulation tasks such as picking and placing objects, rearranging furniture, and handling objects in challenging positions like high shelves and under tables. The gripper with prismatic joints on both fingers further enhances precise object handling capabilities.", "arm_workspace": {"center": [0.15, 0.9, 0.13], "radius": 1.1, "min_bound": [-0.88, -0.03, -0.89], "max_bound": [1.09, 1.85, 1.1]}}
-        }, 
-}
-"""
 
 task_dict = [
 """{"choice": "YES", "task_description": {"name": "Get the [OBJECT] in the fridge onto the [GOAL_RECEPTACLE].", "description": "1.navigate to the fridge 2.open the fridge 3.pick the [OBJECT] in fridge 4.navigate to the [GOAL_RECEPTACLE] 5.place the [OBJECT] on the [GOAL_RECEPTACLE]."}, "pddl_problem": {}, "new_skills": [{"action_name": "open_fridge", "parameters": ["fridge", "robot"]}]}""" ,   

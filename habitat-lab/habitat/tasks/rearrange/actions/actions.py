@@ -560,7 +560,21 @@ class BaseVelAction(ArticulatedAgentAction):
         self._lin_speed = self._config.lin_speed
         self._ang_speed = self._config.ang_speed
         self._allow_back = self._config.allow_back
-        
+        self._animate_leg = self._config.animate_leg and isinstance(
+            self.cur_articulated_agent, SpotRobot
+        )
+        # Leg animation code, it is only used when animate_leg is true
+        if self._animate_leg:
+            self._checkpoint = self._config.get("leg_animation_checkpoint")
+            self._use_range = self._config.get("use_range")
+            assert (
+                os.path.exists(self._checkpoint) == 1
+            ), "Does not provide leg animation checkpoint"
+            self._leg_data = {}  # type: ignore
+            self._load_animation()
+            self._play_i = 0
+            self._play_length_data = len(self._leg_data)
+            self._play_i_perframe = self._config.get("play_i_perframe")
         # External path finder, used in oracle_nav_action
         # TODO: refactor the basevel action so it has option to create its own path finder
         if "pathfinder" in kwargs:
@@ -579,6 +593,30 @@ class BaseVelAction(ArticulatedAgentAction):
                 )
             }
         )
+    
+    def _load_animation(self):
+        """
+        The function loads the leg animation data from a csv file.
+        """
+        first_row = True
+        time_i = 0
+        with open(self._checkpoint, newline="") as csvfile:
+            spamreader = csv.reader(csvfile, delimiter=" ", quotechar="|")
+            # Read from each csv row
+            for row in spamreader:
+                if not first_row:
+                    # Only load the data within the use_range
+                    if (
+                        time_i >= self._use_range[0]
+                        and time_i < self._use_range[1]
+                    ):
+                        joint_angs = row[0].split(",")[1:13]
+                        joint_angs = [float(i) for i in joint_angs]
+                        self._leg_data[
+                            time_i - self._use_range[0]
+                        ] = joint_angs
+                    time_i += 1
+                first_row = False
 
     def _capture_articulated_agent_state(self):
         return {
@@ -665,8 +703,33 @@ class BaseVelAction(ArticulatedAgentAction):
         self.base_vel_ctrl.linear_velocity = mn.Vector3(lin_vel, 0, 0)
         self.base_vel_ctrl.angular_velocity = mn.Vector3(0, ang_vel, 0)
 
+        prev_pos = self.cur_articulated_agent.base_pos
         if lin_vel != 0.0 or ang_vel != 0.0:
             self.update_base()
+            current_pos = self.cur_articulated_agent.base_pos
+            # if lin_vel != 0.0 and np.allclose(prev_pos, current_pos, atol=1e-3):
+            #     self.try_slide_when_colliding(lin_vel)
+
+            if self._animate_leg:
+                cur_i = int(self._play_i % self._play_length_data)
+                self.cur_articulated_agent.leg_joint_pos = self._leg_data[
+                    cur_i
+                ]
+                self._play_i += self._play_i_perframe
+        elif self._animate_leg:
+            self._play_i = 0
+            self.cur_articulated_agent.leg_joint_pos = (
+                self.cur_articulated_agent.params.leg_init_params
+            )
+            
+    def vel_ctrl(self, lin_vel, ang_vel):
+        self.base_vel_ctrl.linear_velocity = mn.Vector3(lin_vel, 0, 0)
+        self.base_vel_ctrl.angular_velocity = mn.Vector3(0, ang_vel, 0)
+        self.update_base()
+
+    def try_slide_when_colliding(self, lin_vel):
+        self.vel_ctrl(0, 10.0)
+        self.vel_ctrl(lin_vel, 0)
 
 
 @registry.register_task_action

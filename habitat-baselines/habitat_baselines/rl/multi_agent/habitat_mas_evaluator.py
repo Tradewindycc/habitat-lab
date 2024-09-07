@@ -46,20 +46,6 @@ class HabitatMASEvaluator(Evaluator):
     ):
         observations = envs.reset()
         observations = envs.post_step(observations)
-
-        # # collect numerical observations and non-numerical observations
-        # numerical_observations = {
-        #     key: value
-        #     for key, value in observations[0].items()
-        #     if isinstance(value, np.ndarray)
-        # }
-        # non_numerical_observations = {
-        #     key: value
-        #     for key, value in observations.items()
-        #     if not isinstance(value, np.ndarray)
-        # }
-
-        # batch = batch_obs(numerical_observations, device=device)
         batch = batch_obs(observations, device=device)
         batch = apply_obs_transforms_batch(batch, obs_transforms)  # type: ignore
 
@@ -148,7 +134,7 @@ class HabitatMASEvaluator(Evaluator):
             # Then collect the context of the episode
             if not prev_actions.any():
                 envs_text_context = envs.call(["get_task_text_context"] * envs.num_envs)
-                # TODO(YCC): Get the env text context from the env to initalize the agent
+                # Get the env text context from the env to initalize the agent
                 if hasattr(agent.actor_critic, "reset_pddl"):
                     agent.actor_critic.reset_pddl(envs_text_context)
 
@@ -193,13 +179,8 @@ class HabitatMASEvaluator(Evaluator):
                     for a in action_data.env_actions.cpu()
                 ]
             else:
-                # step_data = [a.item() for a in action_data.env_actions.cpu()]
-                env_actions = action_data.env_actions.cpu()
-                if agent.num_total_agents < 2:
-                    step_data = [a.item() for a in env_actions]
-                else:
-                    # step_data = [item.item() for a in env_actions for item in a]
-                    step_data = [a for a in env_actions]
+                step_data = [a.item() for a in action_data.env_actions.cpu()]
+
             outputs = envs.step(step_data)
 
             observations, rewards_l, dones, infos = [

@@ -4,21 +4,26 @@ defaults:
   - /habitat: habitat_config_base
   - /habitat/task: task_config_base
 
-  - /habitat/simulator/agents/habitat_mas_agents@habitat.simulator.agents.agent_0: SpotRobot_head_only
-  - /habitat/simulator/agents/habitat_mas_agents@habitat.simulator.agents.agent_1: DJIDrone_default
+  - /habitat/simulator/agents/habitat_mas_agents@habitat.simulator.agents.agent_0: FetchRobot_default
+  - /habitat/simulator/agents/habitat_mas_agents@habitat.simulator.agents.agent_1: StretchRobot_default
 
-  - /habitat/dataset/embodied_mas: perception
+  - /habitat/dataset/embodied_mas: zxz_manipulation
 
-  - /habitat/task/actions@habitat.task.actions.agent_0_arm_action: oracle_arm_action
+  - /habitat/task/actions@habitat.task.actions.agent_0_arm_pick_action: arm_pick_action
+  - /habitat/task/actions@habitat.task.actions.agent_0_arm_place_action: arm_place_action
   - /habitat/task/actions@habitat.task.actions.agent_0_base_velocity: base_velocity_non_cylinder
   - /habitat/task/actions@habitat.task.actions.agent_0_rearrange_stop: rearrange_stop
   - /habitat/task/actions@habitat.task.actions.agent_0_pddl_apply_action: pddl_apply_action
-  - /habitat/task/actions@habitat.task.actions.agent_0_oracle_nav_action: spot_oracle_nav_action
+  - /habitat/task/actions@habitat.task.actions.agent_0_oracle_nav_action: fetch_oracle_nav_action
+  - /habitat/task/actions@habitat.task.actions.agent_0_arm_reset_action: arm_reset_action
 
-  - /habitat/task/actions@habitat.task.actions.agent_1_base_velocity: drone_base_velocity
+  - /habitat/task/actions@habitat.task.actions.agent_1_arm_pick_action: arm_pick_action
+  - /habitat/task/actions@habitat.task.actions.agent_1_arm_place_action: arm_place_action
+  - /habitat/task/actions@habitat.task.actions.agent_1_base_velocity: base_velocity_non_cylinder
   - /habitat/task/actions@habitat.task.actions.agent_1_rearrange_stop: rearrange_stop
   - /habitat/task/actions@habitat.task.actions.agent_1_pddl_apply_action: pddl_apply_action
-  - /habitat/task/actions@habitat.task.actions.agent_1_oracle_nav_action: drone_oracle_nav_action
+  - /habitat/task/actions@habitat.task.actions.agent_1_oracle_nav_action: stretch_oracle_nav_action
+  - /habitat/task/actions@habitat.task.actions.agent_1_arm_reset_action: arm_reset_action
 
   - /habitat/task/measurements:
     - pddl_success
@@ -40,11 +45,18 @@ defaults:
     - localization_sensor
     - other_agent_gps
     - detected_objects_sensor
+    - pddl_text_goal
+    #- arm_workspace_rgb_sensor
+    #- object_masks_sensor
+    #- nav_workspace_rgb_sensor
+    #- arm_workspace_points_sensor
+    #- nav_workspace_points_sensor
   - /habitat/task/lab_sensors@habitat.task.lab_sensors.agent_0_agents_within_threshold: agents_within_threshold
   - /habitat/task/lab_sensors@habitat.task.lab_sensors.agent_1_agents_within_threshold: agents_within_threshold
   - _self_
 
 habitat:
+  # seed: 42
   task:
     lab_sensors:
       agent_0_agents_within_threshold:
@@ -72,12 +84,14 @@ habitat:
         end_on_collide: True
         collide_penalty: 0.5
     task_spec_base_path: benchmark/multi_agent/
-    task_spec: pddl/spot_drone_per
+    task_spec: pddl/zxz_fetch_stretch_man
     pddl_domain_def: fp
     robot_at_thresh: 3.0
 
   environment:
     max_episode_steps: 750
+    # iterator_options:
+    #   shuffle: True
   simulator:
     type: RearrangeSim-v0
     seed: 100
@@ -102,8 +116,8 @@ habitat:
       agent_0:
         joint_start_noise: 0.0
   dataset:
-    data_path: data/datasets/replica_cad/two_agent_perception_eval.json.gz
+    data_path: data/datasets/replica_cad/two_agent_manipulation_eval.json.gz
     # new
     randomize_agent_start: 0
-    robot_config: data/robots/json/perception.json
-    mode: perception
+    robot_config: data/robots/robot_configs/replica_cad/two_agent_manipulation_eval.json
+    mode: manipulation

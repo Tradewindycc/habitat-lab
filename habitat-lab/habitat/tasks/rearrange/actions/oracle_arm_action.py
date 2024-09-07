@@ -163,9 +163,11 @@ class OraclePickAction(ArmEEAction, ArticulatedAgentAction):
             # or self.cur_grasp_mgr.snap_idx is None
             object_coord = self._get_coord_for_pddl_idx(object_pick_pddl_idx)
             cur_ee_pos = self.cur_articulated_agent.ee_transform().translation
-            # TODO(zxz): 使用ee_transform获得的ee_pos与arm_joint_pos使用calc_fk计算的ee_pos不一样
             if not self.is_reset:
                 self.ee_target = self._ik_helper.calc_fk(self.cur_articulated_agent.arm_joint_pos)
+                # Note(zxz): ee_target is under transformation of ik_help,
+                # it should be transformed to the world base to be equal to cur_ee_pos
+                # cur_ee_pos = self.cur_articulated_agent.base_transformation.transform_point(self.ee_target)
                 self.is_reset = True
             translation = object_coord - cur_ee_pos
 
@@ -187,15 +189,6 @@ class OraclePickAction(ArmEEAction, ArticulatedAgentAction):
                 self._sim.viz_ids["ee_target"] = self._sim.visualize_position(
                     global_pos, self._sim.viz_ids["ee_target"]
                 )
-
-            # TODO: should we add retracting action here?
-
-            # Grasp & Ungrasp when we are close to the target
-            # if np.linalg.norm(translation_base) < self._config.grasp_thresh_dist:
-            #     self.cur_grasp_mgr.snap_to_obj(
-            #         self.get_scene_index_obj(object_pick_pddl_idx),
-            #     )
-            #     return self.ee_target
         else:
             self.is_reset = False
 

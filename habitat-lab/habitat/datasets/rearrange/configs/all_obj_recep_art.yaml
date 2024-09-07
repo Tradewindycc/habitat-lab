@@ -217,9 +217,12 @@ receptacle_sets:
       - ""
     excluded_object_substrings: []
     included_receptacle_substrings:
-      - "receptacle_aabb_middle_topfrl_apartment_refrigerator"
+      - receptacle_aabb_middle_topfrl_apartment_refrigerator
+      - receptacle_aabb_bottomfrl_apartment_refrigerator
+      - receptacle_aabb_middle_bottomfrl_apartment_refrigerator
+      - receptacle_aabb_middlefrl_apartment_refrigerator
+      - receptacle_aabb_topfrl_apartment_refrigerator
     excluded_receptacle_substrings: []
-
   -
     name: "inside_drawer"
     included_object_substrings:
@@ -234,7 +237,34 @@ receptacle_sets:
       - receptacle_aabb_drawer_right_bottom_frl_apartment_kitchen_counter
       - receptacle_aabb_drawer_right_top_frl_apartment_kitchen_counter
     excluded_receptacle_substrings: []
-
+  -
+    name: "inside_cab"
+    included_object_substrings:
+      - ""
+    excluded_object_substrings: []
+    included_receptacle_substrings:
+      - receptacle_aabb_interiorfrl_apartment_cabinet
+      - receptacle_aabb_topfrl_apartment_cabinet
+    excluded_receptacle_substrings: []
+  -
+    name: "inside_cupboard"
+    included_object_substrings:
+      - ""
+    excluded_object_substrings: []
+    included_receptacle_substrings:
+      - receptacle_aabb_shelf_center_bottom_left_kitchenCupboard_01
+      - receptacle_aabb_shelf_center_bottom_right_kitchenCupboard_01
+      - receptacle_aabb_shelf_center_middle_left_kitchenCupboard_01
+      - receptacle_aabb_shelf_center_middle_right_kitchenCupboard_01
+      - receptacle_aabb_shelf_center_top_left_kitchenCupboard_01
+      - receptacle_aabb_shelf_center_top_right_kitchenCupboard_01
+      - receptacle_aabb_shelf_left_bottom_kitchenCupboard_01
+      - receptacle_aabb_shelf_left_middle_kitchenCupboard_01
+      - receptacle_aabb_shelf_left_top_kitchenCupboard_01
+      - receptacle_aabb_shelf_right_bottom_kitchenCupboard_01
+      - receptacle_aabb_shelf_right_middle_kitchenCupboard_01
+      - receptacle_aabb_shelf_right_top_kitchenCupboard_01    
+    excluded_receptacle_substrings: []
 scene_sampler:
   type: "subset"
   params:
@@ -247,7 +277,7 @@ object_samplers:
     type: "uniform"
     params:
       object_sets: ["kitchen"]
-      receptacle_sets: ["table", "inside_fridge", "inside_drawer"]
+      receptacle_sets: ["table", "inside_fridge", "inside_drawer", "inside_cab", "inside_cupboard"]
       num_samples: [5, 5]
       orientation_sampling: "up"
 
@@ -257,7 +287,7 @@ object_target_samplers:
     type: "uniform"
     params:
       object_samplers: ["kitchen_counter"]
-      receptacle_sets: ["table", "inside_fridge", "inside_drawer"]
+      receptacle_sets: ["table", "inside_fridge", "inside_drawer", "inside_cab", "inside_cupboard"]
       num_samples: [5, 5]
       orientation_sampling: "up"
 

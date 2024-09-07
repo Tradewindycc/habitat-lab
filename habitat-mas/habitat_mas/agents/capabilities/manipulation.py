@@ -56,10 +56,10 @@ def sample_ee_positions(
     for joint_position in joint_positions:
 
         # Calculate the end effector position
-        # end_effector_position = ik_helper.calc_fk(joint_position) # offset from real position
         agent.arm_joint_pos = joint_position
         agent.fix_joint_values = joint_position
         end_effector_position = agent.ee_transform().translation
+        # end_effector_position = agent.base_transformation.transform_point(ik_helper.calc_fk(joint_position))
 
         # Append the end effector position to the list
         end_effector_positions.append(end_effector_position)
@@ -157,13 +157,19 @@ def get_all_robot_arm_workspace():
         },
         "StretchRobot": {
             "arm_len": 8,
-            "pb_link_idx": 1
+            "pb_link_idx": 14
         }
     }
     
     for robot_type, robot_arm_urdf_path in robot_arm_urdf_paths.items():
-        # Get the robot class            
-            
+        # Get the robot class
+        robot_type = "FetchRobot"
+        robot_arm_urdf_path = os.path.join(data_dir, "robots/hab_fetch/robots/fetch_onlyarm.urdf")
+        # robot_type = "SpotRobot"
+        # robot_arm_urdf_path = os.path.join(data_dir, "robots/hab_spot_arm/urdf/hab_spot_onlyarm_dae.urdf")
+        # robot_type = "StretchRobot"
+        # robot_arm_urdf_path = os.path.join(data_dir, "robots/hab_stretch/urdf/hab_stretch_onlyarm.urdf")
+
         # Define the agent configuration
         agent_config = AgentConfig()
         agent_config.articulated_agent_urdf = robot_urdf_paths[robot_type]
@@ -183,8 +189,8 @@ def get_all_robot_arm_workspace():
         action_dict = {
             "arm_ee_action": ArmActionConfig(
                 arm_controller="ArmEEAction",
-                # grip_controller="MagicGraspAction",
-                grip_controller="SuctionGraspAction",
+                grip_controller="MagicGraspAction",
+                # grip_controller="SuctionGraspAction",
                 # render_ee_target=True
             ),
             "base_velocity_non_cylinder_action": BaseVelocityNonCylinderActionConfig(),

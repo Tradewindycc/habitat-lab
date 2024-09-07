@@ -195,60 +195,74 @@ def generate_agents_description(agent_layer, region_layer, nav_mesh):
     return agent_description
 
 
-#TODO(YCC): specify the type of the receptacle: static or articulated
+#TODO(YCC): specify the type of the receptacle: rigid or articulated
 def gernerate_receptacles_description(sim):
     receptacle_description = ""
-    all_receptacles = find_receptacles(sim)
+    all_aabbreceptacles = find_receptacles(sim)
     # all_navigable_receps = get_navigable_receptacles(sim, all_receptacles, -1)
     recep_dict = {
         "target": {},
         "goal": {}
     }
-    target_receps, goal_receps = [], []
+    target_receptacles, goal_receptacles = [], []
     for i in range(len(sim.ep_info.target_receptacles)):
         target_recep = sim.ep_info.target_receptacles[i][0]
-        target_receps.append(target_recep)
-        recep_dict["target"][target_recep] = []
+        target_receptacles.append(target_recep)
+        recep_dict["target"][target_recep] = {
+            "type": "none",
+            "aabb_receptacles": [],
+            "markers": []
+        }
+ 
     for i in range(len(sim.ep_info.goal_receptacles)):
         goal_recep = sim.ep_info.goal_receptacles[i][0]
-        goal_receps.append(goal_recep)
-        recep_dict["goal"][goal_recep] = []
+        goal_receptacles.append(goal_recep)
+        recep_dict["goal"][goal_recep] = {
+            "type": "none",
+            "aabb_receptacles": [],
+            "markers": []
+        }
 
+    markers = sim.ep_info.markers
     obj_mgr = sim.get_rigid_object_manager()
     ao_mgr = sim.get_articulated_object_manager()
 
-    for receptacle in all_receptacles:
-        for target_recep_handle in target_receps:
-            if receptacle.parent_object_handle == target_recep_handle:
-                recep_dict["target"][target_recep_handle].append(receptacle.name)
-                tar_recep = obj_mgr.get_object_by_handle(target_recep_handle)
-                target_receptacle = parse_receptacles_from_user_config(
-                    tar_recep.user_attributes,
-                    parent_object_handle=tar_recep.handle,
-                    parent_template_directory=tar_recep.creation_attributes.file_directory,
-                )
+    articulated_map = {True: "articulated", False: "rigid"}
 
-        for goal_recep_handle in goal_receps:
-            if receptacle.parent_object_handle == goal_recep_handle:
-                recep_dict["goal"][goal_recep_handle].append(receptacle.name)
-                goal_recep = obj_mgr.get_object_by_handle(goal_recep_handle)
-                goal_receptacle = parse_receptacles_from_user_config(
-                    goal_recep.user_attributes,
-                    parent_object_handle=goal_recep.handle,
-                    parent_template_directory=goal_recep.creation_attributes.file_directory,
-                )
+    # save the type of receptacle and 
+    for aabb_receptacle in all_aabbreceptacles:
+        parent_handle = aabb_receptacle.parent_object_handle
+        is_articulated = aabb_receptacle.is_parent_object_articulated
+        if parent_handle in target_receptacles:
+            recep_dict["target"][parent_handle]["type"] = articulated_map[is_articulated]
+            recep_dict["target"][parent_handle]["aabb_receptacles"].append(aabb_receptacle.name)
+        if parent_handle in goal_receptacles:
+            recep_dict["goal"][parent_handle]["type"] = articulated_map[is_articulated]
+            recep_dict["goal"][parent_handle]["aabb_receptacles"].append(aabb_receptacle.name)
 
+    # save the marker on receptacle
+    for marker in markers:
+        marker_object = marker['params']['object']
+        if marker_object in target_receptacles:
+            recep_dict["target"][marker_object]["markers"].append(
+                {"name": marker['name'], "link": marker['params']['link']}
+            )
+        if marker_object in goal_receptacles:
+            recep_dict["goal"][marker_object]["markers"].append(
+                {"name": marker['name'], "link": marker['params']['link']}
+            )
+        
 
     tar_recep_num = len(recep_dict["target"])
     goal_recep_num = len(recep_dict["goal"])
 
     receptacle_description += "There are {} target receptacles and {} goal receptacles in the scene. ".format(tar_recep_num, goal_recep_num)
     receptacle_description += "For target receptacles:"
-    for parent_handle, receptacle_names in recep_dict['target'].items():
-        receptacle_description += f"{parent_handle} contains the following places to place object: {receptacle_names}. "
+    for parent_handle, receptacles_info in recep_dict['target'].items():
+        receptacle_description += f"{parent_handle} is a {receptacles_info['type']} object which contains {str(receptacles_info['aabb_receptacles'])} to place objects and markers {str(receptacles_info['markers'])} to iteract with robot.\n "
     receptacle_description += "For goal receptacles:"
-    for parent_handle, receptacle_names in recep_dict['goal'].items():
-        receptacle_description += f"{parent_handle} contains the following places to place object: {receptacle_names}. "
+    for parent_handle, receptacles_info in recep_dict['goal'].items():
+        receptacle_description += f"{parent_handle} is a {receptacles_info['type']} object which contains {str(receptacles_info['aabb_receptacles'])} to place objects and markers {str(receptacles_info['markers'])} to iteract with robot.\n "
     return receptacle_description
 
 ############ Visualization ############################

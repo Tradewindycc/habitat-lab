@@ -3,7 +3,23 @@
 objects:
   - name: any_targets|0
     expr_type: movable_entity_type
+  - name: any_targets|1
+    expr_type: movable_entity_type
+  - name: any_targets|2
+    expr_type: movable_entity_type
+  - name: any_targets|3
+    expr_type: movable_entity_type
+  - name: any_targets|4
+    expr_type: movable_entity_type
   - name: TARGET_any_targets|0
+    expr_type: goal_entity_type
+  - name: TARGET_any_targets|1
+    expr_type: goal_entity_type
+  - name: TARGET_any_targets|2
+    expr_type: goal_entity_type
+  - name: TARGET_any_targets|3
+    expr_type: goal_entity_type
+  - name: TARGET_any_targets|4
     expr_type: goal_entity_type
   - name: robot_0
     expr_type: robot_entity_type
@@ -31,5 +47,7 @@ stage_goals:
 solution:
   - nav_to_goal(any_targets|0, robot_0)
   - pick(any_targets|0, robot_0)
+  - reset_arm(robot_0)
   - nav_to_obj(TARGET_any_targets|0, robot_0)
   - place(any_targets|0,TARGET_any_targets|0, robot_0)
+  - reset_arm(robot_0)

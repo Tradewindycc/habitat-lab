@@ -92,8 +92,18 @@ habitat_baselines:
               max_skill_steps: 1500
             pick:
               skill_name: "OraclePickPolicy"
-              action_name: "arm_action"
+              action_name: "arm_pick_action"
               obs_skill_inputs: ["is_holding"]
+              max_skill_steps: 100
+            place:
+              skill_name: "OraclePlacePolicy"
+              action_name: "arm_place_action"
+              obs_skill_inputs: []
+              max_skill_steps: 100
+            reset_arm:
+              skill_name: "ResetArmSkill"
+              action_name: "arm_reset_action"
+              obs_skill_inputs: []
               max_skill_steps: 100
 
           ignore_skills:
@@ -136,8 +146,18 @@ habitat_baselines:
               max_skill_steps: 1500
             pick:
               skill_name: "OraclePickPolicy"
-              action_name: "arm_action"
+              action_name: "arm_pick_action"
               obs_skill_inputs: ["is_holding"]
+              max_skill_steps: 100
+            place:
+              skill_name: "OraclePlacePolicy"
+              action_name: "arm_place_action"
+              obs_skill_inputs: []
+              max_skill_steps: 100
+            reset_arm:
+              skill_name: "ResetArmSkill"
+              action_name: "arm_reset_action"
+              obs_skill_inputs: []
               max_skill_steps: 100
 
           ignore_skills:

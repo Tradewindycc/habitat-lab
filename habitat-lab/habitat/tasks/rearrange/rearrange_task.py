@@ -112,8 +112,8 @@ class RearrangeTask(NavigationTask):
 
         data_path = dataset.config.data_path.format(split=dataset.config.split)
 
-        # TODO(YCC): robot config path
-        robot_config_path = dataset.config.robot_config.format(mode=dataset.config.mode)
+        # Load robot config file
+        robot_config_path = dataset.config.robot_config
         if osp.exists(robot_config_path):
             with open(robot_config_path, "r") as robot_config_file:
                 robot_config = json.load(robot_config_file)

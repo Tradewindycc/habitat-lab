@@ -21,21 +21,21 @@ class StretchRobot(MobileManipulator):
             # TODO(zxz): modify arm_joints number here
             # arm_joints=[28, 27, 26, 25, 23, 31, 33, 34],
             arm_joints=[23, 25, 26, 27, 28, 31, 33, 34],
-            gripper_joints=[38, 36],
+            gripper_joints=[36, 38],
             wheel_joints=[4, 42],
             # arm_init_params=np.array(
             #     [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
             #     dtype=np.float32,
             # ),
             arm_init_params=np.array(
-                [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                [0.0, 0.0, 0.13, 0.0, 0.0, 0.0, 0.0, 0.0],
                 dtype=np.float32,
             ),
             gripper_init_params=np.array([0.0, 0.0], dtype=np.float32),
             ee_offset=[mn.Vector3(0.08, 0, 0)],
-            ee_links=[36],
+            ee_links=[37, 39],
             ee_constraint=np.array(
-                [[[-1.2, 1.2], [-1.5, 1.5], [-1.5, 1.5]]]
+                [[[-2.0, 2.0], [-2.0, 2.0], [-2.0, 2.0]]]
             ),
             # ee_constraint=np.array(
             #     [[[-0.08, 0.29], [-0.84, -0.27], [0.01, 1.12]]]

@@ -14,7 +14,6 @@ from typing import Any, Dict, List, Optional, Union
 
 import corrade as cr
 import magnum as mn
-from sympy import false
 import numpy as np
 
 import habitat_sim

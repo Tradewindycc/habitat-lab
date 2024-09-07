@@ -2,10 +2,10 @@
   "robot_id": "FetchRobot_head_only",
   "robot_type": "FetchRobot",
   "mobility": {
-    "summary": "The robot has differential drive mobility with two continuous joints controlling two wheels (r_wheel_link and l_wheel_link) attached to the base_link. This allows the robot to move forward, backward, and rotate in place. However, there is no indication of stair-climbing capability, which may limit cross-floor tasks unless an elevator or similar device is used for transport between floors."
+    "summary": "The Fetch robot features a differential drive base with continuous joints for both left and right wheels, enabling it to navigate on flat surfaces. This type of base allows for precise linear movements and rotations, making it suitable for indoor environments. It can move across floors to pick and place objects, adhering to tasks requiring cross-floor navigation."
   },
   "perception": {
-    "summary": "Perception capabilities are primarily provided by a head camera system with both RGB and depth sensing (head_camera_rgb_frame and head_camera_depth_frame). The camera is mounted on a head that can pan and tilt, allowing for dynamic visual scanning of the environment. This visual capability is essential for detecting and localizing objects for manipulation tasks and cooperative perception.",
+    "summary": "The Fetch robot is equipped with advanced sensing capabilities. It has a head with pan and tilt joints, allowing the head camera to capture images from various angles. The robot's head camera consists of both RGB and depth sensors, enabling it to perceive geometric details of objects. Additionally, the robot has a fixed laser link for distance measurements, crucial for obstacle avoidance and navigation. These capabilities are essential for searching and perceiving objects for geometric information.",
     "cameras_info": {
       "head_camera": {
         "height": 1.2000000476837158,
@@ -14,22 +14,22 @@
     }
   },
   "manipulation": {
-    "summary": "The robot features a dexterous single arm manipulator that includes several joints: shoulder pan and lift, upper arm roll, elbow flex, forearm roll, wrist flex and roll, and a gripper. The gripper itself has two prismatic joints for the fingers, allowing for grasping and picking up objects of various sizes and shapes. The arm's range of motion enables it to reach objects on high shelves and under tables, fulfilling requirements for home arrangement tasks and object rearrangement.",
+    "summary": "The robot features a highly articulated arm with multiple degrees of freedom, including revolute and continuous joints from the shoulder to the wrist. The end effector includes a gripper with two prismatic joints for gripping objects. These capabilities allow the robot to perform complex manipulation tasks such as object rearrangement and picking from high shelves or under tables. The torso lift joint enables the robot to adjust its height, expanding its operational range.",
     "arm_workspace": {
       "center": [
-        0.1473979502916336,
+        0.14739853143692017,
         0.899940013885498,
-        0.13241101801395416
+        0.1324108988046646
       ],
-      "radius": 1.1041808,
+      "radius": 1.1041796,
       "min_bound": [
-        -0.8757109642028809,
-        -0.03437383100390434,
-        -0.8868227005004883
+        -0.8757104873657227,
+        -0.03437389060854912,
+        -0.8868222236633301
       ],
       "max_bound": [
-        1.0899972915649414,
-        1.8497142791748047,
+        1.0899982452392578,
+        1.8497143983840942,
         1.1006197929382324
       ]
     }

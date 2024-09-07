@@ -34,7 +34,7 @@ pick:
   skill_name: "NoopSkillPolicy"
   obs_skill_inputs: ["obj_start_sensor"]
   max_skill_steps: 1
-  apply_postconds: True
+  apply_postconds: False
   force_end_on_timeout: False
 
 place:
@@ -58,10 +58,10 @@ nav_to_obj:
   pddl_action_names: ["nav_to_obj", "nav_to_goal", "nav_to_robot", "nav_to_receptacle_by_name"]
 
 reset_arm:
-  skill_name: "NoopSkillPolicy"
-  max_skill_steps: 50
-  reset_joint_state: [-4.50e-01, -1.07e00, 9.95e-02, 9.38e-01, -7.88e-04, 1.57e00, 4.62e-03]
-  force_end_on_timeout: False
+  skill_name: "ResetArmSkill"
+  action_name: "arm_reset_action"
+  obs_skill_inputs: []
+  max_skill_steps: 100
 
 
 turn_left:

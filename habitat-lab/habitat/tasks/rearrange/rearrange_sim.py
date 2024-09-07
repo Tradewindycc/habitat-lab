@@ -31,7 +31,7 @@ from habitat.articulated_agents.robots import FetchRobot, FetchRobotNoWheels
 from habitat.config import read_write
 from habitat.core.registry import registry
 from habitat.core.simulator import AgentState, Observations
-from habitat.datasets.rearrange.navmesh_utils import get_largest_island_index
+from habitat.datasets.rearrange.navmesh_utils import get_largest_island_index, get_largest_two_island
 from habitat.datasets.rearrange.rearrange_dataset import RearrangeEpisode
 from habitat.datasets.rearrange.samplers.receptacle import (
     AABBReceptacle,
@@ -650,10 +650,10 @@ class RearrangeSim(HabitatSim):
             pos, self._largest_indoor_island_idx
         )
 
-        max_iter = 100 # 10
+        max_iter = 10
         offset_distance = 1.5
         distance_per_iter = 0.5
-        num_sample_points = 1000
+        num_sample_points = 2000 # 1000
 
         regen_i = 0
         while np.isnan(new_pos[0]) and regen_i < max_iter:
@@ -1161,7 +1161,8 @@ class RearrangeSim(HabitatSim):
         receptacles, target_receptacles, goal_receptacles = [], [], []
         info = {}
         for i, (tar_recep_handle, tar_tranform, tar_translation) in enumerate(ep_info.target_receptacles):
-            if tar_recep_handle.endswith('_:0000'):
+            tar_recep_name = tar_recep_handle
+            if '_:' in tar_recep_name:
                 tar_recep_name = tar_recep_handle[:-6]
             tar_template = otm.get_templates_by_handle_substring(
                 tar_recep_name
@@ -1192,7 +1193,8 @@ class RearrangeSim(HabitatSim):
             )
         receptacles.extend(target_receptacles)
         for i, (goal_recep_handle, goal_transform, goal_translation) in enumerate(ep_info.goal_receptacles):
-            if goal_recep_handle.endswith('_:0000'):
+            goal_recep_name = goal_recep_handle
+            if '_:' in goal_recep_name:
                 goal_recep_name = goal_recep_handle[:-6]
             goal_template = otm.get_templates_by_handle_substring(
                 goal_recep_name
@@ -1238,3 +1240,55 @@ class RearrangeSim(HabitatSim):
                 np.min(bounds, axis=0), np.max(bounds, axis=0)
             )
         return receps
+   
+    def navigable_far_to_target(self, start_pos):
+        path = habitat_sim.ShortestPath()
+        path.requested_start = start_pos   
+        assert self.ep_info.target_receptacles
+        path.requested_end = np.array(
+            self.ep_info.target_receptacles[0][2],
+            dtype=np.float32).reshape(3, 1)
+
+        found_path = self.pathfinder.find_path(path)
+
+        dist_to_closest_obstacle = self.pathfinder.distance_to_closest_obstacle(
+            start_pos
+        )
+
+        # make sure the agent start pos far from the target and avoid collisions 
+        if not found_path or path.geodesic_distance < 2.0 or dist_to_closest_obstacle < 0.5:
+            return False
+        return True
+
+    def snap_point_to_island(self, pos, island_idx: int = -1):
+        max_iter = 10
+        offset_distance = 1.5
+        distance_per_iter = 0.5
+        num_sample_points = 1000
+        if island_idx == -1:
+            new_pos = self.pathfinder.snap_point(
+                pos, self._largest_indoor_island_idx
+            )
+            
+            regen_i = 0
+            while np.isnan(new_pos[0]) and regen_i < max_iter:
+                # Increase the search radius
+                new_pos = self.pathfinder.get_random_navigable_point_near(
+                    pos,
+                    offset_distance + regen_i * distance_per_iter,
+                    num_sample_points,
+                    island_index=self._largest_indoor_island_idx,
+                )
+                regen_i += 1
+        else:
+            new_pos = self.pathfinder.snap_point(pos, island_idx)
+            regen_i = 0
+            while np.isnan(new_pos[0]) and regen_i < max_iter:
+                new_pos = self.pathfinder.get_random_navigable_point_near(
+                    pos,
+                    offset_distance + regen_i * distance_per_iter,
+                    num_sample_points,
+                    island_index=island_idx,
+                )
+                regen_i += 1
+        return new_pos

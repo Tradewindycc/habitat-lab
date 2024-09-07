@@ -354,6 +354,12 @@ class EmbodiedTask:
         if observations is None:
             observations = self._sim.step(None)
 
+        # TODO(zxz): test target obj in workspace sensor
+        pick_obj_entity = self.pddl_problem.all_entities['any_targets|0']
+        obj_pos = self.pddl_problem.sim_info.get_entity_pos(
+            pick_obj_entity
+        )
+
         observations.update(
             self.sensor_suite.get_observations(
                 observations=observations,
@@ -362,6 +368,7 @@ class EmbodiedTask:
                 task=self,
                 should_time=True,
                 ee_target=ee_target,
+                obj_pos=obj_pos,
             )
         )
         self._is_episode_active = self._check_episode_is_active(

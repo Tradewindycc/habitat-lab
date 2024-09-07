@@ -143,6 +143,10 @@ class LogicalExpr:
         sub_s = ",".join((s.compact_str for s in self._sub_exprs))
         return f"{self._expr_type.value}({sub_s})"
 
+    @property
+    def verbose_str(self):
+        return self.__repr__()
+
     def clone(self) -> "LogicalExpr":
         return LogicalExpr(
             self._expr_type,

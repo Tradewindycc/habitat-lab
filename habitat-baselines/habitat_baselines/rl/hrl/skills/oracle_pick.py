@@ -20,8 +20,6 @@ class OraclePickPolicy(NnSkillPolicy):
     """
     Skill to generate a picking motion. Moves the arm next to an object,
     """
-
-    GRAB_ID = 1
     RELEASE_ID = 0
     PICK_ID = 1
 
@@ -151,7 +149,7 @@ class OraclePickPolicy(NnSkillPolicy):
             )
         match_i = self._all_entities.index(target)
 
-        return OraclePickPolicy.OraclePickActionArgs(match_i, self.GRAB_ID)
+        return OraclePickPolicy.OraclePickActionArgs(match_i, self.PICK_ID)
 
     # @property
     # def required_obs_keys(self):
@@ -273,8 +271,7 @@ class OraclePlacePolicy(OraclePickPolicy):
         # )
         # is_within_thresh = rel_resting_pos < self._config.at_resting_threshold
         is_holding = observations[IsHoldingSensor.cls_uuid].view(-1)
-        return torch.tensor([0.], device='cuda:0').type(torch.bool)
-        return is_holding.type(torch.bool)
+        return ~is_holding.type(torch.bool)
 
     def _parse_skill_arg(self, skill_name: str, skill_arg):
         if len(skill_arg) == 2:

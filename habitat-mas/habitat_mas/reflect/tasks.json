@@ -6,5 +6,9 @@
     {
         "name": "Move the 072-d_toy_airplane_:0000 from the table to the top of frl_apartment_wall_cabinet_02_:0000.",
         "description": "1. Navigate to the table with the 072-d_toy_airplane_:0000. 2. Pick up the 072-d_toy_airplane_:0000 from the table. 3. Navigate to frl_apartment_wall_cabinet_02_:0000. 4. Open the cabinet on top of the frl_apartment_wall_cabinet_02_:0000. 5. Place the 072-d_toy_airplane_:0000 inside the cabinet on top of frl_apartment_wall_cabinet_02_:0000."
+    },
+    {
+        "name": "Transfer the 025_mug_:0000 from the kitchen_counter_:0000 to the frl_apartment_wall_cabinet_01_:0000.",
+        "description": "1. Navigate to the kitchen_counter_:0000. 2. Pick up the 025_mug_:0000 from the kitchen_counter_:0000. 3. Navigate to the frl_apartment_wall_cabinet_01_:0000. 4. Place the 025_mug_:0000 onto the frl_apartment_wall_cabinet_01_:0000."
     }
 ]

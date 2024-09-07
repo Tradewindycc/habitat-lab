@@ -90,8 +90,8 @@ habitat:
       agent_0:
         joint_start_noise: 0.0
   dataset:
-    data_path: data/datasets/replica_cad/single_man_eval.json.gz
+    data_path: data/datasets/reflect/reflect_test.json.gz
     # new
-    randomize_agent_start: 1
-    # robot_config: data/robots/robot_configs/replica_cad/single_manipulation.json
+    randomize_agent_start: 0
+    robot_config: data/robots/robot_configs/reflect/reflect_test.json
     mode: manipulation

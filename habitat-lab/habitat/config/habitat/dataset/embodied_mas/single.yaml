@@ -6,5 +6,5 @@ defaults:
 
 type: RearrangeDataset-v0
 split: eval
-data_path: data/datasets/replica_cad/single_man_eval.json.gz
+data_path: data/datasets/reflect/reflect_test.json.gz
 scenes_dir: "data/scene_datasets/hssd-hab"

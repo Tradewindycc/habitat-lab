@@ -43,24 +43,24 @@ robot_base_offset_map = {
 
 # Pre-computed ego-centric arm workspace, w.r.t. base footprint link. TOO SLOW to compute in real-time.
 robot_arm_workspaces = {
-    "FetchRobot": {
-        "center": np.array([0.14739795, 0.89994, 0.13241102], dtype=np.float32),
-        "radius": 1.1041808,
-        "min_bound": np.array([-0.87571096, -0.03437383, -0.8868227], dtype=np.float32),
-        "max_bound": np.array([1.0899973, 1.8497143, 1.1006198], dtype=np.float32),
+    'FetchRobot': {
+        'center': np.array([0.14739853, 0.89994   , 0.1324109 ], dtype=np.float32),
+        'radius': 1.1041796,
+        'min_bound': np.array([-0.8757105 , -0.03437389, -0.8868222 ], dtype=np.float32),
+        'max_bound': np.array([1.0899982, 1.8497144, 1.1006198], dtype=np.float32)
     },
-    "SpotRobot": {
-        "center": np.array([0.21883336, 0.7876817, 0.18432274], dtype=np.float32),
-        "radius": 0.977087,
-        "min_bound": np.array([-0.637238, -0.03964764, -0.6838083], dtype=np.float32),
-        "max_bound": np.array([1.1124825, 1.5562465, 1.0395489], dtype=np.float32),
+    'SpotRobot': {
+        'center': np.array([0.21883333, 0.7876817 , 0.18432271], dtype=np.float32),
+        'radius': 0.977087,
+        'min_bound': np.array([-0.6372385 , -0.03964764, -0.6838088 ], dtype=np.float32),
+        'max_bound': np.array([1.1124821, 1.5562466, 1.0395489], dtype=np.float32)
     },
-    "StretchRobot": {
-        "center": np.array([-2.4114025, 0.54472995, 3.1272984], dtype=np.float32),
-        "radius": 4.071119,
-        "min_bound": np.array([-4.9813809e00, 2.3091778e-01, -1.1563301e-03], dtype=np.float32),
-        "max_bound": np.array([0.11624575, 0.89043516, 6.3016024], dtype=np.float32),
-    },
+    'StretchRobot': {
+        'center': np.array([0.5976211 , 1.0132749 , 0.29112357], dtype=np.float32),
+        'radius': 0.8475281,
+        'min_bound': np.array([ 0.21440315,  0.35393918, -0.0778594 ], dtype=np.float32),
+        'max_bound': np.array([0.9967661, 1.74528  , 0.6300039], dtype=np.float32)
+    }
 }
 
 # The link id to name map of the robots.
@@ -226,7 +226,7 @@ spot_camera_params = {
                     ),
                     cam_look_at_pos=mn.Vector3(1.0, 0.0, 0.0),
                     attached_link_id=-1,
-        ),   
+        ),
         "third": ArticulatedAgentCameraParams(
             cam_offset_pos=mn.Vector3(-0.5, 1.7, -0.5),
             cam_look_at_pos=mn.Vector3(1, 0.0, 0.75),
@@ -240,7 +240,7 @@ spot_camera_params = {
             ),
             cam_look_at_pos=mn.Vector3(1.0, 0.0, 0.0),
             attached_link_id=-1,
-        ),  
+        ),
     },
     "arm_only": {
         "articulated_agent_arm": ArticulatedAgentCameraParams(

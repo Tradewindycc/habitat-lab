@@ -345,11 +345,12 @@ class IkHelper:
         # Add this fix to skip the fixed joints in stretch robot arm
         self._non_fixed_joints: List = self._get_non_fixed_joints()
         self.pb_link_idx = pb_link_idx
+        numJoints = p.getNumJoints(self.robo_id)
 
         p.setGravity(0, 0, -9.81, physicsClientId=self.pc_id)
         JOINT_DAMPING = 0.5
 
-        for link_idx in range(15):
+        for link_idx in range(numJoints):
             p.changeDynamics(
                 self.robo_id,
                 link_idx,
@@ -396,15 +397,39 @@ class IkHelper:
                 physicsClientId=self.pc_id,
             )
 
-    def calc_fk(self, js):
+    def get_base_state(self):
+        return p.getBasePositionAndOrientation(self.robo_id)
+
+    def set_base_state(self, base_pos, base_orn):
+        p.resetBasePositionAndOrientation(self.robo_id, base_pos, base_orn)
+
+    def calc_fk(self, js, link_id=None):
         js = np.array(js)
         self.set_arm_state(js, np.zeros(js.shape))
-        ls = p.getLinkState(
-            self.robo_id,
-            self.pb_link_idx,
-            computeForwardKinematics=1,
-            physicsClientId=self.pc_id,
-        )
+        if link_id is None:
+            ls = p.getLinkState(
+                self.robo_id,
+                self.pb_link_idx,
+                computeForwardKinematics=1,
+                physicsClientId=self.pc_id,
+            )
+        else:
+            ls = p.getLinkState(
+                self.robo_id,
+                link_id,
+                computeForwardKinematics=1,
+                physicsClientId=self.pc_id,
+            )
+        # for debug link state
+        debug_ik = False
+        if debug_ik:
+            print(self._non_fixed_joints)
+            print(f"fk: pos: {ls[4]}, orn: {ls[5]}")
+            num_joints = p.getNumJoints(self.robo_id)
+            for i in range(num_joints):
+                joint_info = p.getJointInfo(self.robo_id, i)
+                print(f"{i}: {joint_info[1]}: pos: {joint_info[14]}, orn: {joint_info[15]}")
+
         world_ee = ls[4]
         return world_ee
 
@@ -435,9 +460,6 @@ class IkHelper:
             # residualThreshold=0.01,
             physicsClientId=self.pc_id,
         )
-        # TODO(zxz): fix output index
-        # joint_indices = [self._non_fixed_joints[i] for i in range(self._arm_len)]
-        # return [js[i] for i in joint_indices]
         return js[:self._arm_len]
 
     def is_reachable(self, targ_ee, thresh=0.05):
@@ -449,7 +471,7 @@ class IkHelper:
         if js is None:
             return False
         ee = self.calc_fk(js)
-        return np.linalg.norm(ee - targ_ee) < thresh
+        return np.linalg.norm(np.array(ee) - np.array(targ_ee)) < thresh
 
     def joint_control(self, joint_angles):
         for i, joint_angle in enumerate(joint_angles):

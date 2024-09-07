@@ -2,10 +2,10 @@
   "robot_id": "SpotRobot_default",
   "robot_type": "SpotRobot",
   "mobility": {
-    "summary": "The robot has a quadrupedal design consisting of four legs (front-left, front-right, hind-left, hind-right), each with three revolute joints (hip, upper leg, lower leg). This design allows it to navigate various terrains and maintain stability on uneven surfaces, enabling it to move around efficiently for tasks including cross-floor operations."
+    "summary": "The robot 'spot' has significant mobility capabilities featured by a base connected to four legs. Each leg has three revolute joints (hip, upper leg, and lower leg), allowing for complex movements useful for navigating diverse terrains. This makes the robot capable of moving across different floor types and potentially handling multi-floor scenarios, which is critical for tasks like cross-floor object rearrangement."
   },
   "perception": {
-    "summary": "The robot is equipped with a fixed head camera and a camera on the arm (articulated agent arm camera) providing it with the ability to gather visual information. This capability is crucial for identifying objects and obtaining geometric information needed for manipulation tasks.",
+    "summary": "The robot is equipped with two cameras: one fixed on the head and another on the arm's end-effector. The head camera is likely used for broader environmental awareness and navigation, while the arm camera provides detailed view necessary for precision tasks, such as identifying and manipulating objects. These cameras enable cooperative perception, allowing the robot to gather geometric information about objects for precise manipulation.",
     "cameras_info": {
       "articulated_agent_arm_camera": {
         "height": 0.5770000063180923,
@@ -18,22 +18,22 @@
     }
   },
   "manipulation": {
-    "summary": "The robot is equipped with a multi-jointed arm featuring seven revolute joints and an additional gripper joint (arm0.link_fngr). This allows for precise and flexible manipulation of objects. Coupled with its perceptive capabilities, the robot can pick and place objects, including those in hard-to-reach areas like high shelves or under tables, fulfilling tasks such as cross-floor object rearrangement and home arrangement.",
+    "summary": "The robot features a highly articulated arm with multiple revolute joints from the shoulder to the wrist and fingers. This arm has intricate joint configurations\u2014seven revolute joints from the shoulder to the fingers\u2014which enable a wide range of movements. The end-effector includes fingers, suggesting it has grasping capabilities. This combination makes the robot adept at tasks requiring detailed manipulation, such as picking and placing objects in various positions, and addressing objects in abnormal locations like high shelves or under tables.",
     "arm_workspace": {
       "center": [
-        0.21883335709571838,
+        0.218833327293396,
         0.7876816987991333,
-        0.18432274460792542
+        0.18432271480560303
       ],
       "radius": 0.977087,
       "min_bound": [
-        -0.6372380256652832,
+        -0.6372385025024414,
         -0.03964763879776001,
-        -0.6838083267211914
+        -0.6838088035583496
       ],
       "max_bound": [
-        1.1124825477600098,
-        1.5562465190887451,
+        1.1124820709228516,
+        1.5562466382980347,
         1.0395488739013672
       ]
     }

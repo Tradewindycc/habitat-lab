@@ -768,7 +768,7 @@ class HierarchicalReflectPolicy(HierarchicalPolicy):
         )
 
         # no new skill needed to learn, reset pddl
-        if pddl_problem != {}:
+        if pddl_problem:
             task_spec_file_path = osp.abspath(osp.join("habitat-lab/habitat/config", task_spec_file))
             assert osp.exists(task_spec_file_path), "task_spec_file_path does not exist"
             if isinstance(pddl_problem, dict):
@@ -782,3 +782,6 @@ class HierarchicalReflectPolicy(HierarchicalPolicy):
                 self.config,
                 read_config=False
             )   
+        # TODO(YCC): new skill needed to learn, step into and start training
+        else:
+            pass

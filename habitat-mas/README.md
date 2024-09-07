@@ -75,18 +75,23 @@ habitat-lab
 │       ├── hab_stretch
 │       ├── spot_data
 │           ├── spot_walking_trajectory.csv
-│       ├── json
-│           ├── manipulation.json
-│           ├── perception.json
+│       ├── robot_configs
+│           ├── hssd
+│             ├── hssd_eval.json
+│           ├── mp3d
+│             ├── mobility_eval.json
+│           ├── replica_cad
+│             ├── two_agent_perception_eval.json
+│             ...
 │       ...
 │   ├── datasets
-│       ├── manipulation
-│           ├── manipulation_eval_fetch.json.gz
+│       ├── replica_cad
+│           ├── single_agent_eval.json.gz
 │           ...
-│       ├── perception
-│           ├── perception_eval_drone.json.gz
+│       ├── hssd
+│           ├── hssd_eval.json.gz
 │           ...
-│       ├── mobility
+│       ├── mp3d
 │           ├── mobility_eval.json.gz
 │           ...
 ...
@@ -130,6 +135,11 @@ Besides, for dataset generation, you should:
 
 - Mainly deploy robots fetch and stretch for object rearrangement.
 - Objects are easy for stretch robot to get, but hard for fetch robot.
+
+**Multi robot mobility**
+
+- Mainly deploy robots spot and fetch for cross-floor navigation.
+- Cross-floor tasks are easy for spot to do, but hard for fetch robot.
 
 ### Run the demo
 

@@ -301,13 +301,13 @@ class ArmActionConfig(ActionConfig):
 class ArmPickActionConfig(ArmActionConfig):
     type: str = "ArmPickAction"
     arm_controller: str = "OraclePickAction"
-    grip_controller: str = "SuctionGraspAction"
+    grip_controller: str = "MagicGraspAction"
 
 @dataclass
 class ArmPlaceActionConfig(ArmActionConfig):
     type: str = "ArmPlaceAction"
     arm_controller: str = "OraclePlaceAction"
-    grip_controller: str = "SuctionGraspAction"
+    grip_controller: str = "MagicGraspAction"
 
 @dataclass
 class OraclePickActionConfig(ArmActionConfig):
@@ -317,8 +317,8 @@ class OraclePickActionConfig(ArmActionConfig):
     """
     type: str = "ArmPickAction"
     arm_controller: str = "OraclePickAction"
-    grip_controller: str = "SuctionGraspAction"
-    grasp_thresh_dist: float = 0.0
+    grip_controller: str = "MagicGraspAction"
+    grasp_thresh_dist: float = 0.05
     render_ee_target: bool = True
 
 @dataclass
@@ -329,8 +329,8 @@ class OraclePlaceActionConfig(ArmActionConfig):
     """
     type: str = "ArmPlaceAction"
     arm_controller: str = "OraclePlaceAction"
-    grip_controller: str = "SuctionGraspAction"
-    grasp_thresh_dist: float = 0.0
+    grip_controller: str = "MagicGraspAction"
+    grasp_thresh_dist: float = 0.05
     render_ee_target: bool = True
 
 @dataclass
@@ -341,8 +341,8 @@ class ResetArmActionConfig(ArmActionConfig):
     """
     type: str = "ResetArmAction"
     arm_controller: str = "OracleResetArmAction"
-    grip_controller: str = "SuctionGraspAction"
-    grasp_thresh_dist: float = 0.0
+    grip_controller: str = "MagicGraspAction"
+    grasp_thresh_dist: float = 0.05
     render_ee_target: bool = True
 
 @dataclass
@@ -353,7 +353,7 @@ class StretchOraclePickActionConfig(ArmActionConfig):
     """
     type: str = "ArmAction"
     arm_controller: str = "StretchOraclePickAction"
-    grip_controller: str = "SuctionGraspAction"
+    grip_controller: str = "MagicGraspAction"
     render_ee_target: bool = True
     arm_joint_mask: Optional[List[int]] = field(default_factory=lambda: [1, 0, 0, 0, 1, 1, 1, 1])
     # arm_joint_dimensionality: int = 10
@@ -375,7 +375,14 @@ class BaseVelocityActionConfig(ActionConfig):
     ang_speed: float = 10.0
     allow_dyn_slide: bool = True
     allow_back: bool = True
-
+    animate_leg: bool = True
+    # Leg animation checkpoint file
+    leg_animation_checkpoint: str = (
+        "data/robots/spot_data/spot_walking_trajectory.csv"
+    )
+    # The play step interval of the leg animation
+    play_i_perframe: int = 5
+    use_range: Optional[List[int]] = field(default_factory=lambda: [107, 863])
 
 @dataclass
 class BaseVelocityNonCylinderActionConfig(ActionConfig):
@@ -800,6 +807,13 @@ class NavGoalPointGoalSensorConfig(LabSensorConfig):
 class GlobalPredicatesSensorConfig(LabSensorConfig):
     type: str = "GlobalPredicatesSensor"
 
+@dataclass
+class PddlTextGoalSensorConfig(LabSensorConfig):
+    type: str = "PddlTextGoalSensor"
+    text_type: str = "description" # ["compact_str", "verbose_str", "description"]
+    task_description: str = """
+The task is to have the robots navigate to/ rearrange/ perceive certain objects in the scene. 
+With the following conditions:"""
 
 @dataclass
 class MultiAgentGlobalPredicatesSensorConfig(LabSensorConfig):
@@ -872,18 +886,26 @@ class NavWorkspaceRGBSensorConfig(LabSensorConfig):
     depth_sensor_name: str = "head_depth"
 
 @dataclass
-class ArmWorkspaceRGBArmSensorConfig(LabSensorConfig):
-    uuid: str = "arm_workspace_rgb_arm"
-    type: str = "ArmWorkspaceRGBArmSensor"
+class ArmWorkspacePointsSensorConfig(LabSensorConfig):
+    uuid: str = "arm_workspace_points"
+    type: str = "ArmWorkspacePointsSensor"
     agent_idx: int = 0
     pixel_threshold: int = 10
     height: int = 480
     width: int = 640
-    rgb_sensor_name_arm: str = "articulated_agent_arm_rgb"
-    depth_sensor_name_arm: str = "articulated_agent_arm_depth"
+
+@dataclass
+class NavWorkspacePointsSensorConfig(LabSensorConfig):
+    uuid: str = "nav_workspace_points"
+    type: str = "NavWorkspacePointsSensor"
+    agent_idx: int = 0
+    pixel_threshold: int = 10
+    height: int = 480
+    width: int = 640
 
 @dataclass
 class ObjectMasksSensorConfig(LabSensorConfig):
+    uuid: str = "object_masks"
     type: str = "ObjectMasksSensor"
     rgb_sensor_name: str = "head_rgb"
     semantic_sensor_name: str = "head_semantic"
@@ -2070,6 +2092,7 @@ class SimulatorConfig(HabitatBaseConfig):
     
     #TODO(ycc): write to json config
     w2j: bool = False
+    json_path: str = "data/robots/json/test.json"
 
 
 @dataclass
@@ -2755,10 +2778,16 @@ cs.store(
     node=NavWorkspaceRGBSensorConfig
 )
 cs.store(
-    package="habitat.task.lab_sensors.arm_workspace_rgb_arm_sensor",
+    package="habitat.task.lab_sensors.arm_workspace_points_sensor",
     group="habitat/task/lab_sensors",
-    name="arm_workspace_rgb_arm_sensor",
-    node=ArmWorkspaceRGBArmSensorConfig
+    name="arm_workspace_points_sensor",
+    node=ArmWorkspacePointsSensorConfig
+)
+cs.store(
+    package="habitat.task.lab_sensors.nav_workspace_points_sensor",
+    group="habitat/task/lab_sensors",
+    name="nav_workspace_points_sensor",
+    node=NavWorkspacePointsSensorConfig
 )
 cs.store(
     package="habitat.task.lab_sensors.object_masks_sensor",
@@ -2811,7 +2840,12 @@ cs.store(
     name="all_predicates",
     node=GlobalPredicatesSensorConfig,
 )
-
+cs.store(
+    package="habitat.task.lab_sensors.pddl_text_goal",
+    group="habitat/task/lab_sensors",
+    name="pddl_text_goal",
+    node=PddlTextGoalSensorConfig,
+)
 
 # Task Measurements
 cs.store(

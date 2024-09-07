@@ -2,10 +2,10 @@
   "robot_id": "DJIDrone_default",
   "robot_type": "DJIDrone",
   "mobility": {
-    "summary": "The provided URDF does not include specific joints or links that would suggest mobility components such as wheels, legs, or thrusters. Therefore, it seems that the dji_m100 lacks inherent mobility capabilities as described in this URDF tree. If it is mobile, this information is not encapsulated in the provided structure."
+    "summary": "The DJI M100 appears to be a drone, indicated by its lack of traditional wheeled or legged base links and its typical usage in aerial applications. This drone base implies it is capable of air mobility, making it suitable for tasks that require movement across different floors by flying."
   },
   "perception": {
-    "summary": "The robot is equipped with a RealSense camera, specifically linked through multiple fixed joints, suggesting it is used for depth perception. Additionally, there is a 'velodyne' sensor, likely a Velodyne LiDAR, which would provide 360-degree environmental mapping and obstacle detection capabilities. This perception setup indicates the robot has strong capabilities for 3D mapping and object detection, which are essential for searching and perceiving objects to acquire geometric information for manipulation tasks.",
+    "summary": "The robot is equipped with several sensors critical for perception. It includes a Velodyne sensor, likely a LIDAR, mounted on the 'veloydyne_base_link'. Additionally, it has a RealSense camera linked to the 'realsense_camera' and 'realsense_depth_optical_frame', providing depth and visual information. It also includes a generic 'head_camera', though specific details about its capabilities are not provided. These sensors collectively allow the robot to perceive its environment, generate geometric information, and assist in object manipulation tasks.",
     "cameras_info": {
       "head_camera": {
         "height": 1.5,
@@ -14,7 +14,7 @@
     }
   },
   "manipulation": {
-    "summary": "There are no explicit manipulation components such as arms or grippers detailed in the given URDF structure. Hence, it appears that the dji_m100 lacks direct manipulation capabilities based on the provided information. If manipulation is intended as part of its task, additional modules or external attachment points for manipulators would be required.",
+    "summary": "The URDF structure doesn't specify any dedicated end effectors or manipulative joints. Therefore, it appears this model of the DJI M100 may lack direct manipulation capabilities. The robot might rely on carrying an attached payload or collaborating with other robots for manipulation tasks.",
     "arm_workspace": {}
   }
 }

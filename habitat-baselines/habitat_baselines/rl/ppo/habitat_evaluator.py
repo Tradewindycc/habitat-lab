@@ -122,7 +122,7 @@ class HabitatEvaluator(Evaluator):
         assert (
             number_of_eval_episodes > 0
         ), "You must specify a number of evaluation episodes with test_episode_count"
-
+        envs_text_context = {}
         pbar = tqdm.tqdm(total=number_of_eval_episodes * evals_per_ep)
         agent.eval()
         while (
@@ -131,6 +131,16 @@ class HabitatEvaluator(Evaluator):
         ):
             current_episodes_info = envs.current_episodes()
 
+            # If all prev_actions are zero, meaning this is the start of an episode
+            # Then collect the context of the episode
+            if not prev_actions.any():
+                envs_text_context = envs.call(["get_task_text_context"] * envs.num_envs)
+                if 'pddl_text_goal' in batch:
+                    envs_pddl_text_goal_np = batch['pddl_text_goal'].cpu().numpy()
+                    for i in range(envs.num_envs):
+                        pddl_text_goal_np = envs_pddl_text_goal_np[i, ...] 
+                        envs_text_context[i]['pddl_text_goal'] = ''.join(str(pddl_text_goal_np, encoding='UTF-8'))
+                        
             space_lengths = {}
             n_agents = len(config.habitat.simulator.agents)
             if n_agents > 1:

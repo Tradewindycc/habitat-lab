@@ -9,18 +9,21 @@ defaults:
 
   - /habitat/dataset/rearrangement: dataset_mobility
 
-  - /habitat/task/actions@habitat.task.actions.agent_0_arm_action: oracle_arm_action
-  - /habitat/task/actions@habitat.task.actions.agent_0_base_velocity: base_velocity_non_cylinder
+  - /habitat/task/actions@habitat.task.actions.agent_0_arm_pick_action: arm_pick_action
+  - /habitat/task/actions@habitat.task.actions.agent_0_arm_place_action: arm_place_action
+  - /habitat/task/actions@habitat.task.actions.agent_0_base_velocity: base_velocity # base_velocity_non_cylinder
   - /habitat/task/actions@habitat.task.actions.agent_0_rearrange_stop: rearrange_stop
   - /habitat/task/actions@habitat.task.actions.agent_0_pddl_apply_action: pddl_apply_action
-  - /habitat/task/actions@habitat.task.actions.agent_0_oracle_nav_action: spot_oracle_nav_action
+  - /habitat/task/actions@habitat.task.actions.agent_0_oracle_nav_action: spot_oracle_nav_action_3d
+  - /habitat/task/actions@habitat.task.actions.agent_0_arm_reset_action: arm_reset_action
 
-  - /habitat/task/actions@habitat.task.actions.agent_1_arm_action: oracle_arm_action
-  - /habitat/task/actions@habitat.task.actions.agent_1_base_velocity: base_velocity_non_cylinder
+  - /habitat/task/actions@habitat.task.actions.agent_1_arm_pick_action: arm_pick_action
+  - /habitat/task/actions@habitat.task.actions.agent_1_arm_place_action: arm_place_action
+  - /habitat/task/actions@habitat.task.actions.agent_1_base_velocity: base_velocity
   - /habitat/task/actions@habitat.task.actions.agent_1_rearrange_stop: rearrange_stop
   - /habitat/task/actions@habitat.task.actions.agent_1_pddl_apply_action: pddl_apply_action
-  - /habitat/task/actions@habitat.task.actions.agent_1_oracle_nav_action: fetch_oracle_nav_action
-
+  - /habitat/task/actions@habitat.task.actions.agent_1_oracle_nav_action: fetch_oracle_nav_action_3d
+  - /habitat/task/actions@habitat.task.actions.agent_1_arm_reset_action: arm_reset_action
 
 
   - /habitat/task/measurements:
@@ -42,6 +45,7 @@ defaults:
     - target_goal_gps_compass_sensor
     - localization_sensor
     - other_agent_gps
+    - pddl_text_goal
 
   - /habitat/task/lab_sensors@habitat.task.lab_sensors.agent_0_agents_within_threshold: agents_within_threshold
   - /habitat/task/lab_sensors@habitat.task.lab_sensors.agent_1_agents_within_threshold: agents_within_threshold
@@ -72,7 +76,7 @@ habitat:
         must_call_stop: False
       rearrange_cooperate_reward:
         stage_sparse_reward: 5.0
-        end_on_collide: True
+        end_on_collide: False
         collide_penalty: 0.5
     task_spec_base_path: benchmark/multi_agent/
     task_spec: pddl/pddl_spot_fetch_mobility
@@ -86,10 +90,10 @@ habitat:
         lin_speed: 40.0
         ang_speed: 20.0
 
-    robot_at_thresh: 3.0
+    robot_at_thresh: 1.0
 
   environment:
-    max_episode_steps: 750
+    max_episode_steps: 1500
   simulator:
     type: RearrangeSim-v0
     seed: 100
@@ -113,9 +117,12 @@ habitat:
     agents:
       agent_0:
         joint_start_noise: 0.0
+      
+    w2j: False
+    json_path: "data/robots/robot_configs/mp3d/mobility_eval.json"
   dataset:
-    data_path: data/datasets/mobility/mobility_eval.json.gz
+    data_path: data/datasets/mp3d/mobility_eval.json.gz
     # new
-    randomize_agent_start: 1
-    robot_config: data/robots/json/perception.json
-    mode: perception
+    randomize_agent_start: 0
+    robot_config: data/robots/robot_configs/mp3d/mobility_eval.json
+    mode: mobility

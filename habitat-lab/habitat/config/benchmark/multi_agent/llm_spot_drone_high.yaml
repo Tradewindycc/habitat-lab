@@ -45,6 +45,7 @@ defaults:
     - target_goal_gps_compass_sensor
     - localization_sensor
     - other_agent_gps
+    - pddl_text_goal
   - /habitat/task/lab_sensors@habitat.task.lab_sensors.agent_0_agents_within_threshold: agents_within_threshold
   - /habitat/task/lab_sensors@habitat.task.lab_sensors.agent_1_agents_within_threshold: agents_within_threshold
   - _self_

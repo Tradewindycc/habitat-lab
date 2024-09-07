@@ -82,7 +82,7 @@ class PddlRobotState:
     place_at_angle_thresh: Optional[float] = None
     base_angle_noise: Optional[float] = None
     filter_colliding_states: Optional[bool] = None
-    #TODO(YCC): add keyword for detected objects
+    # add keyword for detected objects
     detected_object: Optional[PddlEntity] = None
 
     def get_place_at_pos_dist(self, sim_info) -> float:
@@ -107,6 +107,7 @@ class PddlRobotState:
     ) -> "PddlRobotState":
         self.holding = sub_dict.get(self.holding, self.holding)
         self.pos = sub_dict.get(self.pos, self.pos)
+        self.detected_object = sub_dict.get(self.detected_object, self.detected_object)
         return self
 
     def sub_in_clone(
@@ -115,6 +116,7 @@ class PddlRobotState:
         other = replace(self)
         other.holding = sub_dict.get(self.holding, self.holding)
         other.pos = sub_dict.get(self.pos, self.pos)
+        other.detected_object = sub_dict.get(self.detected_object, self.detected_object)
         return other
 
     def clone(self) -> "PddlRobotState":
@@ -144,31 +146,21 @@ class PddlRobotState:
         elif self.should_drop and grasp_mgr.snap_idx != None:
             return False
         
-         #TODO: add detected objects checking
-        if self.detected_object is not None:
-            # ename = self.detected_object.name
-            # rom = sim_info.sim.get_rigid_object_manager()
-            # idx = sim_info.obj_ids[ename]
-            # obj = rom.get_object_by_id(sim_info.sim.scene_obj_ids[idx])
+         # add detected objects checking
+        if isinstance(self.detected_object, PddlEntity):
             obj_idx = cast(int, sim_info.search_for_entity(self.detected_object))
+            # absolute object id = object id + semantic_offset
             abs_obj_id = sim_info.sim.scene_obj_ids[obj_idx] + sim_info.sim.habitat_config.object_ids_start
-            # abs_obj_id = sim_info.sim.scene_obj_ids[obj_idx]
 
             sim_obs = sim_info.sim.get_sensor_observations()
             observations = sim_info.sim.sensor_suite.get_observations(sim_obs)
-            # episode = sim_info.episode
-            # task = sim_info.env
-            # obs = sim_info.env.sensor_suite.get_observations(observations=observations, episode=episode, task=task)
-            # TODO(zxz): modify here for single agent
-            assert (
-                    f"agent_{robot_id}_detected_objects" in sim_info.env.sensor_suite.sensors
-                    or f"detected_objects" in sim_info.env.sensor_suite.sensors
-            ), f"agent_{robot_id}_detected_objects or detected_objects should be in the sensors"
+
             if f"agent_{robot_id}_detected_objects" in sim_info.env.sensor_suite.sensors:
                 obs = sim_info.env.sensor_suite.get(f"agent_{robot_id}_detected_objects").get_observation(observations)
-            else:
+            elif "detected_objects" in sim_info.env.sensor_suite.sensors:
                 obs = sim_info.env.sensor_suite.get(f"detected_objects").get_observation(observations)
-
+            else:
+                obs = [abs_obj_id]
             if abs_obj_id not in obs:
                 return False
 
@@ -229,6 +221,28 @@ class PddlRobotState:
             agent_data.grasp_mgr.snap_to_obj(sim.scene_obj_ids[obj_idx])
             sim.internal_step(-1)
 
+        # set the robot near the object if detected_object is not None
+        if isinstance(self.detected_object, PddlEntity):
+            target_pos = sim_info.get_entity_pos(self.detected_object)
+
+            start_pos, start_rot, was_fail = place_agent_at_dist_from_pos(
+                target_position=target_pos,
+                rotation_perturbation_noise=self.get_base_angle_noise(
+                    sim_info
+                ),
+                distance_threshold=self.get_place_at_pos_dist(sim_info),
+                sim=sim,
+                num_spawn_attempts=sim_info.num_spawn_attempts,
+                filter_colliding_states=self.get_filter_colliding_states(
+                    sim_info
+                ),
+                agent=agent_data.articulated_agent,
+            )
+            agent_data.articulated_agent.base_pos = start_pos
+            agent_data.articulated_agent.base_rot = start_rot
+            if was_fail:
+                rearrange_logger.error("Failed to place the robot near the object.")
+
         # Set the robot starting position
         if isinstance(self.pos, PddlEntity):
             targ_pos = sim_info.get_entity_pos(self.pos)
@@ -269,6 +283,8 @@ class PddlSimState:
         art_states: Dict[PddlEntity, ArtSampler],
         obj_states: Dict[PddlEntity, PddlEntity],
         robot_states: Dict[PddlEntity, PddlRobotState],
+        is_detected: Optional[PddlEntity] = None,
+        any_at: Optional[Any] = None,
     ):
         for k, v in obj_states.items():
             if not isinstance(k, PddlEntity) or not isinstance(v, PddlEntity):
@@ -287,15 +303,19 @@ class PddlSimState:
         self._art_states = art_states
         self._obj_states = obj_states
         self._robot_states = robot_states
+        self.is_detected = is_detected
+        self.any_at = any_at
 
     def __repr__(self):
-        return f"{self._art_states}, {self._obj_states}, {self._robot_states}"
+        return f"{self._art_states}, {self._obj_states}, {self._robot_states}, {self.is_detected}, {self.any_at}"
 
     def clone(self) -> "PddlSimState":
         return PddlSimState(
             self._art_states,
             self._obj_states,
             {k: v.clone() for k, v in self._robot_states.items()},
+            self.is_detected,
+            self.any_at,
         )
 
     def sub_in_clone(
@@ -311,6 +331,8 @@ class PddlSimState:
                 sub_dict.get(k, k): robot_state.sub_in_clone(sub_dict)
                 for k, robot_state in self._robot_states.items()
             },
+            sub_dict.get(self.is_detected, self.is_detected),
+            sub_dict.get(self.any_at, self.any_at),
         )
 
     def sub_in(self, sub_dict: Dict[PddlEntity, PddlEntity]) -> "PddlSimState":
@@ -325,6 +347,8 @@ class PddlSimState:
             sub_dict.get(k, k): sub_dict.get(v, v)
             for k, v in self._obj_states.items()
         }
+        self.is_detected = sub_dict.get(self.is_detected, self.is_detected)
+        self.any_at = sub_dict.get(self.any_at, self.any_at)
         return self
 
     def is_compatible(self, expr_types) -> bool:
@@ -367,6 +391,43 @@ class PddlSimState:
             for art_entity in self._art_states
         )
 
+    def is_object_detected(self, sim_info: PddlSimInfo) -> bool:
+        obj_idx = cast(int, sim_info.search_for_entity(self.is_detected))
+        # absolute object id = object id + semantic_offset
+        abs_obj_id = sim_info.sim.scene_obj_ids[obj_idx] + sim_info.sim.habitat_config.object_ids_start
+
+        sim_obs = sim_info.sim.get_sensor_observations()
+        observations = sim_info.sim.sensor_suite.get_observations(sim_obs)
+
+        obs = [abs_obj_id]
+        num_robots = len(sim_info.robot_ids)
+        for i in range(num_robots):
+            if f"agent_{i}_detected_objects" in sim_info.env.sensor_suite.sensors:
+                obs = sim_info.env.sensor_suite.get(f"agent_{i}_detected_objects").get_observation(observations)
+            elif "detected_objects" in sim_info.env.sensor_suite.sensors:
+                obs = sim_info.env.sensor_suite.get("detected_objects").get_observation(observations)
+            if abs_obj_id in obs:
+                return True
+
+        return False
+    
+    def is_any_robot_at(self, sim_info: PddlSimInfo) -> bool:
+        targ_pos = sim_info.get_entity_pos(self.any_at)
+        for robot_id in range(len(sim_info.robot_ids)):
+
+            robot = sim_info.sim.get_agent_data(robot_id).articulated_agent
+            
+            T = robot.base_transformation
+            pos = T.inverted().transform_point(targ_pos)
+            pos[2] = 0.0
+
+            dist = np.linalg.norm(pos)
+
+            if dist <= sim_info.robot_at_thresh:
+                return True
+
+        return False
+
     def is_true(
         self,
         sim_info: PddlSimInfo,
@@ -396,6 +457,15 @@ class PddlSimState:
             for robot_entity, robot_state in self._robot_states.items()
         ):
             return False
+        
+        if isinstance(self.is_detected, PddlEntity):
+            if not self.is_object_detected(sim_info):
+                return False
+
+        if isinstance(self.any_at, PddlEntity):
+            if not self.is_any_robot_at(sim_info):
+                return False
+
         return True
 
     def set_state(self, sim_info: PddlSimInfo) -> None:

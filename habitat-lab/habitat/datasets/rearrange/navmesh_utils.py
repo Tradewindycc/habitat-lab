@@ -655,3 +655,25 @@ def get_largest_island_index(
         return largest_indoor_island
 
     return island_areas[0][0]
+
+def get_largest_two_island(
+    pathfinder: habitat_sim.nav.PathFinder,
+    sim: habitat_sim.Simulator):
+    assert pathfinder.is_loaded, "PathFinder is not loaded."
+    island_areas = [
+        (island_ix, pathfinder.island_area(island_index=island_ix))
+        for island_ix in range(pathfinder.num_islands)
+    ]
+    # sort by area, descending
+    island_areas.sort(reverse=True, key=lambda x: x[1])
+    indoor_island = []
+    for i in range(len(island_areas)):
+        if not is_outdoor(pathfinder, sim, island_areas[i][0]):
+            indoor_island.append(island_areas[i][0])
+    assert len(indoor_island), "no indoor island found"
+
+    if len(indoor_island) == 1:
+        return indoor_island[0], -1
+    else:
+        return indoor_island[0], indoor_island[1]
+    

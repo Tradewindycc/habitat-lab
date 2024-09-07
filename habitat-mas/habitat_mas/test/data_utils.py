@@ -97,8 +97,8 @@ def get_fetch_hssd_env():
     action_dict = {
         "arm_ee_action": ArmActionConfig(
             arm_controller="ArmEEAction",
-            # grip_controller="MagicGraspAction",
-            grip_controller="SuctionGraspAction",
+            grip_controller="MagicGraspAction",
+            # grip_controller="SuctionGraspAction",
             # render_ee_target=True
         ),
         "base_velocity_non_cylinder_action": BaseVelocityNonCylinderActionConfig(),
@@ -129,8 +129,8 @@ def get_spot_hssd_env():
     action_dict = {
         "arm_ee_action": ArmActionConfig(
             arm_controller="ArmEEAction",
-            # grip_controller="MagicGraspAction",
-            grip_controller="SuctionGraspAction",
+            grip_controller="MagicGraspAction",
+            # grip_controller="SuctionGraspAction",
             # render_ee_target=True
         ),
         "base_velocity_non_cylinder_action": BaseVelocityNonCylinderActionConfig(),
