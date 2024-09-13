@@ -57,13 +57,3 @@ def nav_to_goal(target_obj: str):
         target_obj: The any_targets object to navigate to.
     """
     pass
-
-@action
-def nav_to_receptacle_by_name(receptacle: str):
-    """
-    Navigate to a receptacle by name.
-    
-    Args:
-        receptacle: The receptacle to navigate to.
-    """
-    pass
