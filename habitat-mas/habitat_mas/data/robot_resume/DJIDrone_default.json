@@ -2,10 +2,10 @@
   "robot_id": "DJIDrone_default",
   "robot_type": "DJIDrone",
   "mobility": {
-    "summary": "The DJI M100 appears to be a drone, indicated by its lack of traditional wheeled or legged base links and its typical usage in aerial applications. This drone base implies it is capable of air mobility, making it suitable for tasks that require movement across different floors by flying."
+    "summary": "The dji_m100 is designed primarily as an aerial robot, indicating its flying capability. This capability allows it to easily navigate between different floors and across various environments. Its mobilization is not constrained by ground-based challenges such as stairs or differing ground types, which makes it suitable for tasks requiring movement between multiple levels in a building."
   },
   "perception": {
-    "summary": "The robot is equipped with several sensors critical for perception. It includes a Velodyne sensor, likely a LIDAR, mounted on the 'veloydyne_base_link'. Additionally, it has a RealSense camera linked to the 'realsense_camera' and 'realsense_depth_optical_frame', providing depth and visual information. It also includes a generic 'head_camera', though specific details about its capabilities are not provided. These sensors collectively allow the robot to perceive its environment, generate geometric information, and assist in object manipulation tasks.",
+    "summary": "The robot is equipped with multiple sensors. It features a RealSense camera attached to a base link, suggesting a comprehensive visual perceptive capability. The height and fixed positioning of these cameras enable a consistent field of view, which is critical for accurate Object detection and perception essential for cooperative tasks. With sensors like the Velodyne likely providing additional depth or environmental sensing, it has robust capabilities for perceiving and navigating its surroundings before manipulation.",
     "cameras_info": {
       "head_camera": {
         "height": 1.5,
@@ -14,7 +14,7 @@
     }
   },
   "manipulation": {
-    "summary": "The URDF structure doesn't specify any dedicated end effectors or manipulative joints. Therefore, it appears this model of the DJI M100 may lack direct manipulation capabilities. The robot might rely on carrying an attached payload or collaborating with other robots for manipulation tasks.",
+    "summary": "The URDF description does not detail joints or end effectors specific to manipulation tasks, suggesting the primary focus is on mobility and perception. Without articulated arms or manipulators listed, the dji_m100 may rely on other robots for manipulation in cooperative tasks or might require additional modules to perform object rearrangement and handling. Its current structure may limit its ability to directly interact with objects, particularly those in abnormal positions like high shelves or under tables.",
     "arm_workspace": {}
   }
 }

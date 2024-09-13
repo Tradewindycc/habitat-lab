@@ -7,15 +7,11 @@ import re
 
 from habitat.tasks.rearrange.multi_task.pddl_action import PddlAction
 from habitat.tasks.rearrange.multi_task.rearrange_pddl import parse_func
-from habitat_mas.agents.actions.arm_actions import *
-from habitat_mas.agents.actions.base_actions import *
-from habitat_mas.agents.llm_reflection_agent import LLMReflectAgent
-from habitat_mas.agents.prompts import *
+from habitat_mas.reflect.llm_reflection_agent import LLMReflectAgent
+from habitat_mas.reflect.prompts import *
 from habitat_baselines.common.logging import baselines_logger
 from habitat_baselines.rl.hrl.hl.high_level_policy import HighLevelPolicy
 from habitat_baselines.rl.ppo.policy import PolicyActionData
-
-ACTION_POOL = [get_agents, send_request, nav_to_obj, nav_to_goal, pick, place, nav_to_receptacle_by_name]
 
 class LLMHighLevelReflectPolicy(HighLevelPolicy):
 
@@ -25,9 +21,8 @@ class LLMHighLevelReflectPolicy(HighLevelPolicy):
         self._n_actions = len(self._all_actions)
         self._active_envs = torch.zeros(self._num_envs, dtype=torch.bool)
 
-        llm_actions = ACTION_POOL
         # Initialize the LLM agent
-        self._llm_agent = self._init_llm_agent(kwargs["agent_name"], llm_actions)
+        self._llm_agent = self._init_llm_agent(self._agent_name)
 
         self._update_solution_actions(
             [self._parse_solution_actions() for _ in range(self._num_envs)]
@@ -35,24 +30,19 @@ class LLMHighLevelReflectPolicy(HighLevelPolicy):
 
         self._next_sol_idxs = torch.zeros(self._num_envs, dtype=torch.int32)
 
-    def _init_llm_agent(self, agent_name, action_list):
+    def _init_llm_agent(self, agent_name):
         return LLMReflectAgent(
             agent_name=agent_name,
-            action_space=action_list,
         )
     
     # TODO(YCC): initialize the LLM agent with environment config and reset pddl problem
-    def reset_pddl(self, envs_text_context, pddl_def):
-        self._llm_agent = self._init_llm_agent(self._agent_name, ACTION_POOL)
-
-        
-
-        env_prompt, goal_specify = self.user_prompt_initialize(envs_text_context, pddl_def)
+    def reset_pddl(self, env_start_text, pddl_def):
+        env_prompt, goal_specify = self.user_prompt_initialize(env_start_text, pddl_def)
 
         env_summary = self._llm_agent.chat(
-            system_prompt=system_prompt[0],
-            user_prompt = env_prompt, 
-            assistant_prompt = assistant_prompt[0],
+            system_prompt=system_prompts[0],
+            content = env_prompt, 
+            assistant_prompt = assistant_prompts[0],
         )
         env_summary_dict = self.string_dict_format(env_summary)
 
@@ -61,11 +51,10 @@ class LLMHighLevelReflectPolicy(HighLevelPolicy):
         goal_specify = goal_specify.replace("[GOAL_RECEPTACLE]", env_summary_dict["receptacles"][1]['receptacle_id'])
 
         response = self._llm_agent.chat(
-            system_prompt=system_prompt[1],
-            user_prompt = goal_specify, 
-            assistant_prompt = assistant_prompt[1],
+            system_prompt=system_prompts[1],
+            content = goal_specify, 
+            assistant_prompt = assistant_prompts[1],
         )
-
         
         response_dict = self.string_dict_format(response)
         (
@@ -138,8 +127,8 @@ class LLMHighLevelReflectPolicy(HighLevelPolicy):
                 continue
             llm_output = self._llm_agent.chat(
                 content=str(observations[batch_idx]), 
-                user_prompt=user_prompt[2], 
-                assistant_prompt=assistant_prompt[2], 
+                user_prompt=user_prompts[2], 
+                assistant_prompt=assistant_prompts[2], 
             )
             step_mode, reward_design, measure = self.split_plan()
             if step_mode == 'llm':
@@ -274,17 +263,17 @@ class LLMHighLevelReflectPolicy(HighLevelPolicy):
             rnn_hidden_states.device
         )
 
-    def user_prompt_initialize(self, envs_text_context = None, pddl_def: str = None, task_description: str = None):
+    def user_prompt_initialize(self, env_start_text = None, pddl_def: str = None, task_description: str = None):
 
         # split the scene description and robot resume
-        scene_descript, robot_res = envs_text_context['scene_description'], envs_text_context['robot_resume']
+        scene_descript, robot_res = env_start_text['env_start_text'], env_start_text['robot_resume']
 
-        env_prompt = user_prompt[0].replace("[SCENE DESCRIPTION]", scene_descript)
+        env_prompt = user_prompts[0].replace("[SCENE DESCRIPTION]", scene_descript)
         env_prompt = env_prompt.replace("[ROBOT RESUME]", robot_res)
     
         env_prompt = env_prompt.replace("[PDDL DEFINITIONS]", str(pddl_def))
 
-        goal_specify = user_prompt[1].replace("[TASK DICT YES]", task_dict[0])
+        goal_specify = user_prompts[1].replace("[TASK DICT YES]", task_dict[0])
         goal_specify = goal_specify.replace("[TASK DICT NO]", task_dict[1])
 
         return env_prompt, goal_specify

@@ -72,15 +72,44 @@ class SceneGraphHSSD(SceneGraphBase):
                 abs_obj_id
             ).transformation.rotation
 
+            obj_label = None
+            if object_handle in sim._handle_to_goal_name:
+                obj_label = sim._handle_to_goal_name[object_handle]
+            
             self.object_layer.add_object(
                 cur_pos,
                 cur_rot,
                 # size,
                 id=obj_id,
+                label=obj_label,
                 full_name=object_handle,
                 # class_name=obj.category.name(),
                 # bbox=node_bbox,
             )
+        
+        target_trans = self.sim._get_target_trans()
+        if len(target_trans):
+            targets = {}
+            for target_id, trans in target_trans:
+                targets[target_id]  = trans
+
+            if self.sim.ep_info.goal_receptacles and len(self.sim.ep_info.goal_receptacles):
+                for target_id, goal_recep in enumerate(self.sim.ep_info.goal_receptacles):
+                    goal_recep_handle = goal_recep[0]
+                    assert target_id in targets
+                    target = targets[target_id]
+                    target_pos = target.translation
+                    target_rot = target.rotation
+
+                    goal_recep = rom.get_object_by_handle(goal_recep_handle)
+                    abs_obj_id = goal_recep.object_id + self.sim.habitat_config.object_ids_start
+                    self.object_layer.add_object(
+                        target_pos,
+                        target_rot,
+                        id=abs_obj_id,
+                        full_name=goal_recep_handle,
+                        label=f"TARGET_any_targets|{target_id}"
+                    )
 
         # 5. load agents from habitat simulator
         for i, agent_name in enumerate(sim.agents_mgr.agents_order):

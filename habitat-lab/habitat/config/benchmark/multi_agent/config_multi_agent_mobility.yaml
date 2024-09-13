@@ -4,45 +4,47 @@ defaults:
   - /habitat: habitat_config_base
   - /habitat/task: task_config_base
 
-  - /habitat/simulator/agents/habitat_mas_agents@habitat.simulator.agents.agent_0: SpotRobot_head_jaw
-  - /habitat/simulator/agents/habitat_mas_agents@habitat.simulator.agents.agent_1: DJIDrone_default
-  - /habitat/simulator/agents/habitat_mas_agents@habitat.simulator.agents.agent_2: FetchRobot_default
-  - /habitat/simulator/agents/habitat_mas_agents@habitat.simulator.agents.agent_3: StretchRobot_default
+  - /habitat/simulator/agents/habitat_mas_agents@habitat.simulator.agents.agent_0: SpotRobot_no_semantic
+  - /habitat/simulator/agents/habitat_mas_agents@habitat.simulator.agents.agent_1: FetchRobot_no_semantic
+  - /habitat/simulator/agents/habitat_mas_agents@habitat.simulator.agents.agent_2: StretchRobot_no_semantic
+  - /habitat/simulator/agents/habitat_mas_agents@habitat.simulator.agents.agent_3: DJIDrone_no_semantic
 
-  - /habitat/dataset/embodied_mas: zxz_perception
+  - /habitat/dataset/rearrangement: dataset_mobility
 
   - /habitat/task/actions@habitat.task.actions.agent_0_arm_pick_action: arm_pick_action
   - /habitat/task/actions@habitat.task.actions.agent_0_arm_place_action: arm_place_action
-  - /habitat/task/actions@habitat.task.actions.agent_0_base_velocity: base_velocity_non_cylinder
+  - /habitat/task/actions@habitat.task.actions.agent_0_base_velocity: base_velocity # base_velocity_non_cylinder
   - /habitat/task/actions@habitat.task.actions.agent_0_rearrange_stop: rearrange_stop
   - /habitat/task/actions@habitat.task.actions.agent_0_pddl_apply_action: pddl_apply_action
-  - /habitat/task/actions@habitat.task.actions.agent_0_oracle_nav_action: spot_oracle_nav_action
+  - /habitat/task/actions@habitat.task.actions.agent_0_oracle_nav_action: spot_oracle_nav_action_3d
   - /habitat/task/actions@habitat.task.actions.agent_0_arm_reset_action: arm_reset_action
   - /habitat/task/actions@habitat.task.actions.agent_0_wait: wait
 
-  - /habitat/task/actions@habitat.task.actions.agent_1_base_velocity: drone_base_velocity
+  - /habitat/task/actions@habitat.task.actions.agent_1_arm_pick_action: arm_pick_action
+  - /habitat/task/actions@habitat.task.actions.agent_1_arm_place_action: arm_place_action
+  - /habitat/task/actions@habitat.task.actions.agent_1_base_velocity: base_velocity
   - /habitat/task/actions@habitat.task.actions.agent_1_rearrange_stop: rearrange_stop
   - /habitat/task/actions@habitat.task.actions.agent_1_pddl_apply_action: pddl_apply_action
-  - /habitat/task/actions@habitat.task.actions.agent_1_oracle_nav_action: drone_oracle_nav_action
+  - /habitat/task/actions@habitat.task.actions.agent_1_oracle_nav_action: fetch_oracle_nav_action_3d
+  - /habitat/task/actions@habitat.task.actions.agent_1_arm_reset_action: arm_reset_action
   - /habitat/task/actions@habitat.task.actions.agent_1_wait: wait
 
   - /habitat/task/actions@habitat.task.actions.agent_2_arm_pick_action: arm_pick_action
   - /habitat/task/actions@habitat.task.actions.agent_2_arm_place_action: arm_place_action
-  - /habitat/task/actions@habitat.task.actions.agent_2_base_velocity: base_velocity_non_cylinder
+  - /habitat/task/actions@habitat.task.actions.agent_2_base_velocity: base_velocity
   - /habitat/task/actions@habitat.task.actions.agent_2_rearrange_stop: rearrange_stop
   - /habitat/task/actions@habitat.task.actions.agent_2_pddl_apply_action: pddl_apply_action
-  - /habitat/task/actions@habitat.task.actions.agent_2_oracle_nav_action: fetch_oracle_nav_action
+  - /habitat/task/actions@habitat.task.actions.agent_2_oracle_nav_action: stretch_oracle_nav_action_3d
   - /habitat/task/actions@habitat.task.actions.agent_2_arm_reset_action: arm_reset_action
   - /habitat/task/actions@habitat.task.actions.agent_2_wait: wait
 
-  - /habitat/task/actions@habitat.task.actions.agent_3_arm_pick_action: arm_pick_action
-  - /habitat/task/actions@habitat.task.actions.agent_3_arm_place_action: arm_place_action
-  - /habitat/task/actions@habitat.task.actions.agent_3_base_velocity: base_velocity_non_cylinder
+  - /habitat/task/actions@habitat.task.actions.agent_3_base_velocity: drone_base_velocity
   - /habitat/task/actions@habitat.task.actions.agent_3_rearrange_stop: rearrange_stop
   - /habitat/task/actions@habitat.task.actions.agent_3_pddl_apply_action: pddl_apply_action
-  - /habitat/task/actions@habitat.task.actions.agent_3_oracle_nav_action: stretch_oracle_nav_action
-  - /habitat/task/actions@habitat.task.actions.agent_3_arm_reset_action: arm_reset_action
+  - /habitat/task/actions@habitat.task.actions.agent_3_oracle_nav_action: drone_oracle_nav_action_3d
   - /habitat/task/actions@habitat.task.actions.agent_3_wait: wait
+
+
 
   - /habitat/task/measurements:
     - pddl_success
@@ -62,14 +64,9 @@ defaults:
     - target_start_gps_compass_sensor
     - target_goal_gps_compass_sensor
     - localization_sensor
-    #- other_agent_gps
-    - detected_objects_sensor
+    # - other_agent_gps
     - pddl_text_goal
-    #- arm_workspace_rgb_sensor
-    #- object_masks_sensor
-    #- nav_workspace_rgb_sensor
-    #- arm_workspace_points_sensor
-    #- nav_workspace_points_sensor
+
   - /habitat/task/lab_sensors@habitat.task.lab_sensors.agent_0_agents_within_threshold: agents_within_threshold
   - /habitat/task/lab_sensors@habitat.task.lab_sensors.agent_1_agents_within_threshold: agents_within_threshold
   - /habitat/task/lab_sensors@habitat.task.lab_sensors.agent_2_agents_within_threshold: agents_within_threshold
@@ -95,6 +92,7 @@ habitat:
         x_len: 2.0
         y_len: 1.5
         agent_idx: 3
+
     type: RearrangePddlTask-v0
     reward_measure: rearrange_cooperate_reward
     success_measure: pddl_success
@@ -109,22 +107,39 @@ habitat:
         must_call_stop: False
       rearrange_cooperate_reward:
         stage_sparse_reward: 5.0
-        end_on_collide: True
+        end_on_collide: False
         collide_penalty: 0.5
     task_spec_base_path: benchmark/multi_agent/
-    task_spec: pddl/zxz_multi_agent_per
+    task_spec: pddl/pddl_multi_agent_mobility
     pddl_domain_def: fp
-    robot_at_thresh: 3.0
+    actions:
+      agent_0_base_velocity:
+        lin_speed: 40.0
+        ang_speed: 20.0
+
+      agent_1_base_velocity:
+        lin_speed: 40.0
+        ang_speed: 20.0
+
+      agent_2_base_velocity:
+        lin_speed: 40.0
+        ang_speed: 20.0
+      
+      agent_3_base_velocity:
+        lin_speed: 40.0
+        ang_speed: 20.0
+
+    robot_at_thresh: 2.0
 
   environment:
-    max_episode_steps: 750
+    max_episode_steps: 1500
   simulator:
     type: RearrangeSim-v0
     seed: 100
     additional_object_paths:
       - "data/objects/ycb/configs/"
-      - "data/objects/amazon_berkeley/configs/"
-      - "data/objects/google_object_dataset/configs/"
+      - "data/replica_cad/configs/objects"
+
     concur_render: True
     auto_sleep: True
     agents_order:
@@ -143,14 +158,16 @@ habitat:
     agents:
       agent_0:
         joint_start_noise: 0.0
+      agent_1:
+        joint_start_noise: 0.0
       agent_2:
         joint_start_noise: 0.0
-      agent_3:
-        joint_start_noise: 0.0
+      
+    w2j: False
+    json_path: "data/robots/robot_configs/mp3d/mobility_eval.json"
   dataset:
-    data_path: data/datasets/replica_cad/multi_agent_eval.json.gz
+    data_path: data/datasets/mp3d/mobility_episodes_1k5.json.gz
     # new
     randomize_agent_start: 1
-    # TODO
-    robot_config: data/robots/robot_configs/replica_cad/multi_agent_eval.json
-    mode: perception
+    # robot_config: data/robots/robot_configs/mp3d/mobility_eval.json
+    mode: mobility

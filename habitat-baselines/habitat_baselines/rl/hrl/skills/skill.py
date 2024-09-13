@@ -116,8 +116,15 @@ class SkillPolicy(Policy):
         """
         Modifies the actions according to the postconditions set in self._pddl_problem.actions[skill_name]
         """
-        skill_args = self._raw_skill_args[env_i]
+        raw_skill_args = self._raw_skill_args[env_i]
         action = self._pddl_problem.actions[skill_name]
+        
+        skill_args = []
+        if isinstance(raw_skill_args, dict):
+            for k, v in raw_skill_args.items():
+                skill_args.append(v)
+        else:
+            skill_args = raw_skill_args
 
         entities = [self._pddl_problem.get_entity(x) for x in skill_args]
         assert (

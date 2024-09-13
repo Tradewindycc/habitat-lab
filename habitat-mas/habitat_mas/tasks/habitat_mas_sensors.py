@@ -10,7 +10,13 @@ from habitat.core.registry import registry
 from habitat.core.simulator import Sensor, SensorTypes
 from habitat_mas.dataset.defaults import habitat_mas_data_dir
 from habitat_mas.scene_graph.scene_graph_hssd import SceneGraphHSSD
-from habitat_mas.scene_graph.utils import generate_objects_description, generate_agents_description, gernerate_receptacles_description    
+from habitat_mas.scene_graph.scene_graph_mp3d import SceneGraphMP3D
+from habitat_mas.scene_graph.utils import (
+    generate_objects_description, 
+    generate_agents_description, 
+    generate_mp3d_objects_description, 
+    generate_mp3d_agents_description
+)    
 
 @registry.register_sensor
 class HSSDSceneDescriptionSensor(Sensor):
@@ -42,18 +48,55 @@ class HSSDSceneDescriptionSensor(Sensor):
         # Generate scene descriptions
         objects_description = generate_objects_description(self._sim, sg.object_layer)
         agent_description = generate_agents_description(sg.agent_layer, sg.region_layer, sg.nav_mesh)
-        receptacle_description = gernerate_receptacles_description(sg.sim)
         
         scene_description = {
             "objects_description": objects_description,
-            "agent_description": agent_description,
-            "receptacles_description": receptacle_description
+            "agent_description": agent_description
         }
         
         # convert dict to json string
         scene_description_str = json.dumps(scene_description)
         
         return scene_description_str
+
+class MP3DSceneDescriptionSensor(Sensor):
+    """Sensor to generate text descriptions of the scene from the environment simulation."""
+    cls_uuid: str = "scene_description"
+    
+    def __init__(self, sim, config, *args, **kwargs):
+        self._sim = sim
+        self._config = config
+        super().__init__(**kwargs)
+        
+    def _get_uuid(self, *args, **kwargs):
+        return MP3DSceneDescriptionSensor.cls_uuid
+
+    def _get_sensor_type(self, *args, **kwargs):
+        return SensorTypes.TEXT
+
+    def _get_observation_space(self, *args, **kwargs):
+        return spaces.Text(max_length=10000)
+    
+    def get_observation(self, *args, **kwargs):
+        """Generate text descriptions of the scene."""
+        
+        # Initialize scene graph
+        sg = SceneGraphMP3D()
+        sg.load_gt_scene_graph(self._sim)
+        
+        # Generate scene descriptions
+        objects_description = generate_mp3d_objects_description(sg.object_layer)
+        agent_description = generate_mp3d_agents_description(sg.agent_layer, sg.region_layer)
+        
+        scene_description = {
+            "objects_description": objects_description,
+            "agent_description": agent_description
+        }
+        
+        # convert dict to json string
+        scene_description_str = json.dumps(scene_description)
+        
+        return scene_description_str   
     
 @registry.register_sensor
 class RobotResumeSensor(Sensor):
@@ -215,21 +258,33 @@ def get_text_sensors(sim, *args, **kwargs):
             type: str = "HSSDSceneDescriptionSensor"
 
         @dataclass
+        class MP3DSceneDescriptionSensorConfig:
+            type: str = "MP3DSceneDescriptionSensor"
+
+        @dataclass
         class RobotResumeSensorConfig:
             type: str = "RobotResumeSensor"
             robot_resume_dir: str = "robot_resume"
-            
-        lab_sensors_config["scene_description"] = HSSDSceneDescriptionSensorConfig()
+
         lab_sensors_config["robot_resume"] = RobotResumeSensorConfig()
-        
-    return {
-        "scene_description": HSSDSceneDescriptionSensor(
-            sim, lab_sensors_config["scene_description"], *args, **kwargs
-        ),
-        "robot_resume": RobotResumeSensor(
-            sim, lab_sensors_config["robot_resume"], *args, **kwargs
-        )
-    }
+
+        if "dataset" in sim.ep_info.info and sim.ep_info.info["dataset"] == "mp3d":
+            lab_sensors_config["scene_description"] = MP3DSceneDescriptionSensorConfig()
+            scene_description_sensor = MP3DSceneDescriptionSensor(
+                sim, lab_sensors_config["scene_description"], *args, **kwargs
+            )
+        else:    
+            lab_sensors_config["scene_description"] = HSSDSceneDescriptionSensorConfig()
+            scene_description_sensor = HSSDSceneDescriptionSensor(
+                sim, lab_sensors_config["scene_description"], *args, **kwargs
+            )
+
+        return {
+            "scene_description": scene_description_sensor,
+            "robot_resume": RobotResumeSensor(
+                sim, lab_sensors_config["robot_resume"], *args, **kwargs
+            )
+        }
 
 def get_text_context(sim, robot_configs: List[Dict], *args, **kwargs):
     

@@ -35,6 +35,8 @@ defaults:
     - target_goal_gps_compass_sensor
     - localization_sensor
     - detected_objects_sensor
+    - object_masks_sensor
+    # - marker_visualize_sensor
   - _self_
 
 habitat:
@@ -92,6 +94,6 @@ habitat:
   dataset:
     data_path: data/datasets/reflect/reflect_test.json.gz
     # new
-    randomize_agent_start: 0
-    robot_config: data/robots/robot_configs/reflect/reflect_test.json
+    randomize_agent_start: 1
+    # robot_config: data/robots/robot_configs/reflect/reflect_test.json
     mode: manipulation

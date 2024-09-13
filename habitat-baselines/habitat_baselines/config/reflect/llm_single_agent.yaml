@@ -35,7 +35,7 @@ habitat_baselines:
 
   evaluate: True
   evaluator:
-    _target_: habitat_baselines.rl.multi_agent.habitat_mas_evaluator.HabitatMASEvaluator
+    _target_: habitat_baselines.rl.hrl.habitat_reflect_evaluator.HabitatReflectEvaluator
 
   video_dir: "video_dir/single/"
   image_dir: "video_dir/image_dir/"

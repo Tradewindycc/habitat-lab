@@ -56,10 +56,10 @@ robot_arm_workspaces = {
         'max_bound': np.array([1.1124821, 1.5562466, 1.0395489], dtype=np.float32)
     },
     'StretchRobot': {
-        'center': np.array([0.5976211 , 1.0132749 , 0.29112357], dtype=np.float32),
-        'radius': 0.8475281,
-        'min_bound': np.array([ 0.21440315,  0.35393918, -0.0778594 ], dtype=np.float32),
-        'max_bound': np.array([0.9967661, 1.74528  , 0.6300039], dtype=np.float32)
+        'center': np.array([-0.64200795,  0.5130169 ,  0.1732484 ], dtype=np.float32),
+        'radius': 0.84763783,
+        'min_bound': np.array([-1.0987    , -0.14606091, -0.01741028], dtype=np.float32),
+        'max_bound': np.array([-0.21523285,  1.2452799 ,  0.37965298], dtype=np.float32)
     }
 }
 

@@ -118,6 +118,9 @@ class MobilityGenerator:
             selected_sub_scene = random.choice(sub_scene_paths)
             scene_glb_path = osp.join(dataset_path, selected_sub_scene, f"{selected_sub_scene}.glb")
 
+        if not osp.exists(scene_glb_path):
+            return None
+
         backend_cfg.scene_id = scene_glb_path
         backend_cfg.scene_dataset_config_file = self.cfg.dataset_path
         # backend_cfg.additional_obj_config_paths = cfg.additional_object_paths
@@ -161,7 +164,7 @@ class MobilityGenerator:
 
         return scene_glb_path
 
-    def safe_snap_point(self, point, island_idx) -> np.ndarray:
+    def safe_snap_point(self, point, island_idx):
         new_pos = self.sim.pathfinder.snap_point(
             point, island_idx
         )
@@ -194,6 +197,9 @@ class MobilityGenerator:
     ) -> Optional[RearrangeEpisode]:
         
         ep_scene_handle = self.initialize_sim(self.dataset_path)
+        if not ep_scene_handle:
+            return None
+
         scene_base_dir = osp.dirname(osp.dirname(ep_scene_handle))
         scene_name = ep_scene_handle.split(".")[0].split("/")[-1]
         navmesh_path = osp.join(
@@ -309,7 +315,7 @@ class MobilityGenerator:
                     target_aabbreceptacle.sample_uniform_global(
                         self.sim, 1.0
                     )
-                    + 0.8 * rec_up_global
+                    + 0.08 * rec_up_global
                 )            
 
                 if not is_accessible(
@@ -323,6 +329,7 @@ class MobilityGenerator:
                     new_target_receptacles = {}
                     continue
                 break
+        
         
         # try to place the goal receptacles to goal position
         num_placement_tries = 0
@@ -378,7 +385,7 @@ class MobilityGenerator:
                     goal_aabbreceptacle.sample_uniform_global(
                         self.sim, 1.0
                     )
-                    + 0.8 * rec_up_global
+                    + 0.08 * rec_up_global
                 )
 
                 if not is_accessible(
@@ -391,6 +398,7 @@ class MobilityGenerator:
                 ):
                     new_goal_receptacles = {}
                     continue
+                break
 
         if height_dist < 2.0 or new_goal_receptacles == {} or new_target_receptacles == {}:
             return None
@@ -538,7 +546,7 @@ if __name__ == "__main__":
     config_path = "habitat-lab/habitat/datasets/rearrange/configs/mp3d.yaml" 
     output_dir = "data/datasets/mobility"
     scene_dataset_path = "data/scene_datasets/mp3d/"     
-    num_episodes = 1
+    num_episodes = 1500
 
     assert num_episodes > 0, "Number of episodes must be greater than 0."
     assert osp.exists(

@@ -340,8 +340,7 @@ class EmbodiedTask:
                     episode,
                 )
                 if (a_name == "arm_pick_action" or
-                    a_name == "arm_place_action" or
-                    a_name == "arm_reset_action"
+                    a_name == "arm_place_action"
                 ):
                     ee_target = observations
         else:

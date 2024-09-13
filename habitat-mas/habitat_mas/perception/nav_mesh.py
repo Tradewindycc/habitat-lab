@@ -157,6 +157,6 @@ class NavMesh:
         triangle_centers = np.mean(self.vertices[self.triangles], axis=1)
         
         # find the triangle below the agent
-        triangle_id = np.argmax(np.linalg.norm(triangle_centers - agent_pos, axis=1)[triangle_ids])
+        triangle_id = np.argmin(np.linalg.norm(triangle_centers - agent_pos, axis=1)[triangle_ids])
         
         return triangle_id

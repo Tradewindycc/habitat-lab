@@ -242,6 +242,8 @@ class JointSensor(UsesArticulatedAgentInterface, Sensor):
         return mask_joints_pos
 
     def get_observation(self, observations, episode, *args, **kwargs):
+        if 'physics_target_sps' in kwargs:
+            self._sim.step_physics(1.0 / kwargs['physics_target_sps'])
         joints_pos = self._sim.get_agent_data(
             self.agent_id
         ).articulated_agent.arm_joint_pos

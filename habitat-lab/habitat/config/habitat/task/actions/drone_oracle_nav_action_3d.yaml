@@ -18,11 +18,11 @@ enable_lateral_move: False
 # is more than collision_threshold for any point.
 collision_threshold: 0.1
 dist_thresh: 0.3
-turn_thresh: 0.1
+turn_thresh: 0.3
 
 # For re-computing navmesh for different bases 
-base_type: "wheel"
-agent_height: 1.0
+base_type: "flying"
+agent_height: 0.5
 agent_radius: 0.0
-agent_max_climb: 0.02
-agent_max_slope: 5.0
+agent_max_climb: 0.5
+agent_max_slope: 90.0

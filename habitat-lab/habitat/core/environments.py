@@ -105,6 +105,15 @@ class RLTaskEnv(habitat.RLEnv):
         )
         return self._env.task.get_task_text_context()
 
+    def get_env_start_text(self):
+        """
+        Get the start text of the environment.
+        """
+        if hasattr(self._env.task, "get_env_start_text"):
+            return self._env.task.get_env_start_text()
+        else:
+            return {}
+
 
 @habitat.registry.register_env(name="GymRegistryEnv")
 class GymRegistryEnv(gym.Wrapper):

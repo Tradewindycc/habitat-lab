@@ -2,10 +2,10 @@
   "robot_id": "FetchRobot_head_only",
   "robot_type": "FetchRobot",
   "mobility": {
-    "summary": "The Fetch robot features a differential drive base with continuous joints for both left and right wheels, enabling it to navigate on flat surfaces. This type of base allows for precise linear movements and rotations, making it suitable for indoor environments. It can move across floors to pick and place objects, adhering to tasks requiring cross-floor navigation."
+    "summary": "The Fetch robot is equipped with a differential drive system, as indicated by the presence of left and right wheel links connected via continuous joints to the base link. This design suggests mobility on flat ground and possibly rough terrain, but it does not include any flight capability, stair-climbing mechanisms, or abilities to move between floors autonomously. Therefore, for multi-floor tasks, the robot will require external assistance to traverse different levels."
   },
   "perception": {
-    "summary": "The Fetch robot is equipped with advanced sensing capabilities. It has a head with pan and tilt joints, allowing the head camera to capture images from various angles. The robot's head camera consists of both RGB and depth sensors, enabling it to perceive geometric details of objects. Additionally, the robot has a fixed laser link for distance measurements, crucial for obstacle avoidance and navigation. These capabilities are essential for searching and perceiving objects for geometric information.",
+    "summary": "Fetch has an articulated head equipped with pan and tilt capabilities, enabling wide-angle perception. Specifically, it includes an RGB camera and a depth camera mounted on the head, providing both visual data and depth information crucial for object detection and manipulation. The height of these sensors varies with the adjustable torso lift, improving its ability to perceive objects at various heights and contribute effectively to cooperative perception tasks and object search and identification.",
     "cameras_info": {
       "head_camera": {
         "height": 1.2000000476837158,
@@ -14,7 +14,7 @@
     }
   },
   "manipulation": {
-    "summary": "The robot features a highly articulated arm with multiple degrees of freedom, including revolute and continuous joints from the shoulder to the wrist. The end effector includes a gripper with two prismatic joints for gripping objects. These capabilities allow the robot to perform complex manipulation tasks such as object rearrangement and picking from high shelves or under tables. The torso lift joint enables the robot to adjust its height, expanding its operational range.",
+    "summary": "The robot features a highly articulable arm with seven degrees of freedom, including joints for shoulder pan and lift, continuous rotation for the upper arm and forearm, and revolute joints for the elbow and wrist flexion. This setup, coupled with a prismatic gripper mechanism, allows for versatile and precise manipulation. The arm's extensive reach and adjustability enable it to interact with objects both on high shelves and under tables, making it suitable for complex home arrangement tasks.",
     "arm_workspace": {
       "center": [
         0.14739853143692017,

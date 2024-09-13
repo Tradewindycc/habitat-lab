@@ -744,7 +744,7 @@ class HierarchicalReflectPolicy(HierarchicalPolicy):
         self.config = config
         self.full_config = full_config
 
-    def reset_pddl(self, envs_text_context = None):
+    def reset_pddl(self, env_start_text = None):
         # reset pddl problem from LLM agent
         task_spec_file = osp.join(
             self.full_config.habitat.task.task_spec_base_path,
@@ -763,7 +763,7 @@ class HierarchicalReflectPolicy(HierarchicalPolicy):
 
         assert hasattr(self._high_level_policy, "reset_pddl"), "Only LLMReflectPolicy has reset_pddl method"
         pddl_problem = self._high_level_policy.reset_pddl(
-            envs_text_context=envs_text_context[0], 
+            env_start_text=env_start_text[0], 
             pddl_def=domain_def_str
         )
 

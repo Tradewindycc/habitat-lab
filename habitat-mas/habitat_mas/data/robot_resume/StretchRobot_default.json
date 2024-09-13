@@ -2,35 +2,35 @@
   "robot_id": "StretchRobot_default",
   "robot_type": "StretchRobot",
   "mobility": {
-    "summary": "The robot has a differential drive base with two continuous joints connecting to the right and left wheels, providing the capability to move on the ground. The base is equipped with a caster link for stability. This mobility setup allows the robot to navigate across different floors and environments."
+    "summary": "The 'stretch_description' robot has a wheeled base with two continuous joints for the right and left wheels, respectively. This configuration suggests that it is designed to navigate flat ground surfaces efficiently. However, its mobility is likely limited to ground-level movement as there is no indication of stairs-climbing capabilities or flying abilities. Therefore, its ability to move between floors for tasks like cross-floor object rearrangement would necessitate external assistance via elevators or ramps."
   },
   "perception": {
-    "summary": "The robot is equipped with an extensive array of sensors, particularly a camera system mounted on a head with pan and tilt capabilities for wide-angle vision. The camera setup includes depth, infrared, color, accelerometer, and gyroscope frames, providing comprehensive 3D and motion sensing. This suite of sensors supports the robot in accurately searching, perceiving objects, and obtaining geometric information necessary for manipulation.",
+    "summary": "The robot is equipped with a variety of sensors primarily located on its head, including a depth camera, infrared cameras (infra1 and infra2), a color camera, accelerometers, and gyroscopes. The head can pan and tilt, allowing for a wide field of view. This sensor configuration supports the robot's capability for cooperative perception necessary for manipulating objects, as it can gather detailed geometric information about its environment. However, the effectiveness in perceiving objects on high shelves or under tables would depend on the mobility of the robot's mast and camera positioning.",
     "cameras_info": {
       "head_camera": {
-        "height": 1.9223896471356907,
+        "height": 1.9223901178495244,
         "type": "articulated"
       }
     }
   },
   "manipulation": {
-    "summary": "The robot features a sophisticated arm with multiple prismatic joints allowing linear extension and retraction and three revolute joints at the wrist (yaw, pitch, roll) providing rotational movements. The end effector is a multi-fingered gripper capable of grasping diverse objects. This versatile arm and gripper combination enables effective manipulation tasks, such as picking and placing objects from high shelves or under tables.",
+    "summary": "The robot features a highly capable manipulator with multiple prismatic joints in the arm (link_arm_l4 to link_arm_l0), enhancing its vertical reach. It has a sophisticated wrist with yaw, pitch, and roll capabilities, and it ends with a gripper that includes two fingers and fingertips, allowing for complex grasping tasks. This high degree of freedom in the arm's joints maximizes the robot's workspace, permitting it to manipulate objects in various orientations and heights, including high shelves and under tables. Thus, it can effectively perform home arrangement tasks by rearranging furniture and objects in abnormal positions.",
     "arm_workspace": {
       "center": [
-        0.5976210832595825,
-        1.013274908065796,
-        0.29112356901168823
+        -0.6420079469680786,
+        0.5130168795585632,
+        0.17324839532375336
       ],
-      "radius": 0.8475281,
+      "radius": 0.84763783,
       "min_bound": [
-        0.2144031524658203,
-        0.3539391756057739,
-        -0.07785940170288086
+        -1.0987000465393066,
+        -0.14606091380119324,
+        -0.01741028018295765
       ],
       "max_bound": [
-        0.9967660903930664,
-        1.7452800273895264,
-        0.6300039291381836
+        -0.21523284912109375,
+        1.2452799081802368,
+        0.3796529769897461
       ]
     }
   }

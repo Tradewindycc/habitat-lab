@@ -26,8 +26,7 @@ from habitat_baselines.utils.common import (
 )
 from habitat_baselines.utils.info_dict import extract_scalars_from_info
 
-
-class HabitatEvaluator(Evaluator):
+class HabitatReflectEvaluator(Evaluator):
     """
     Evaluator for Habitat environments.
     """
@@ -125,7 +124,6 @@ class HabitatEvaluator(Evaluator):
         envs_text_context = {}
         pbar = tqdm.tqdm(total=number_of_eval_episodes * evals_per_ep)
         agent.eval()
-        cur_ep_id = -1
         while (
             len(stats_episodes) < (number_of_eval_episodes * evals_per_ep)
             and envs.num_envs > 0
@@ -135,15 +133,11 @@ class HabitatEvaluator(Evaluator):
             # If all prev_actions are zero, meaning this is the start of an episode
             # Then collect the context of the episode
             if not prev_actions.any():
-            if current_episodes_info[0].episode_id != cur_ep_id:
-                cur_ep_id = current_episodes_info[0].episode_id
-                envs_text_context = envs.call(["get_task_text_context"] * envs.num_envs)
-                if 'pddl_text_goal' in batch:
-                    envs_pddl_text_goal_np = batch['pddl_text_goal'].cpu().numpy()
-                    for i in range(envs.num_envs):
-                        pddl_text_goal_np = envs_pddl_text_goal_np[i, ...] 
-                        envs_text_context[i]['pddl_text_goal'] = ''.join(str(pddl_text_goal_np, encoding='UTF-8'))
-                        
+                env_start_text = envs.call(["get_env_start_text"] * envs.num_envs)
+                # Get the env text context from the env to initalize the agent
+                if hasattr(agent.actor_critic, "reset_pddl"):
+                    agent.actor_critic.reset_pddl(env_start_text)
+
             space_lengths = {}
             n_agents = len(config.habitat.simulator.agents)
             if n_agents > 1:
@@ -158,6 +152,7 @@ class HabitatEvaluator(Evaluator):
                     prev_actions,
                     not_done_masks,
                     deterministic=False,
+                    envs_text_context=envs_text_context,
                     **space_lengths,
                 )
                 if action_data.should_inserts is None:
@@ -242,13 +237,16 @@ class HabitatEvaluator(Evaluator):
                     frame = observations_to_image(
                         {k: v[i] for k, v in batch.items()}, disp_info,
                         config, len(rgb_frames[0]),
+                        episode_id=current_episodes_info[i].episode_id,
                     )
                     if not not_done_masks[i].any().item():
                         # The last frame corresponds to the first frame of the next episode
                         # but the info is correct. So we use a black frame
                         final_frame = observations_to_image(
                             {k: v[i] * 0.0 for k, v in batch.items()},
-                            disp_info, config, len(rgb_frames[0]),
+                            disp_info, config, 
+                            frame_id=len(rgb_frames[0]),
+                            episode_id=current_episodes_info[i].episode_id,
                         )
                         final_frame = overlay_frame(final_frame, disp_info)
                         rgb_frames[i].append(final_frame)
@@ -273,6 +271,10 @@ class HabitatEvaluator(Evaluator):
                     ep_eval_count[k] += 1
                     # use scene_id + episode_id as unique id for storing stats
                     stats_episodes[(k, ep_eval_count[k])] = episode_stats
+
+                    # clear the prev_actions and recurrent_hidden_states
+                    prev_actions[i] = 0
+                    test_recurrent_hidden_states[i] = 0
 
                     if len(config.habitat_baselines.eval.video_option) > 0:
                         generate_video(

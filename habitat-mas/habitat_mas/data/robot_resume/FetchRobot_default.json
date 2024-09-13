@@ -2,10 +2,10 @@
   "robot_id": "FetchRobot_default",
   "robot_type": "FetchRobot",
   "mobility": {
-    "summary": "The Fetch robot has a differential drive mobility system enabled by the continuous joints connecting the base_link to the r_wheel_link and l_wheel_link. This suggests the robot is capable of navigating and moving on the ground but does not have capabilities for climbing stairs or flying."
+    "summary": "The Fetch robot utilizes a wheeled base with continuous joints for its right and left wheels, making it a ground-based robot primarily suited for flat surfaces. It does not possess the ability to navigate stairs or move between floors autonomously, therefore requiring external assistance for inter-floor travel."
   },
   "perception": {
-    "summary": "The Fetch robot is equipped with several sensors for perception. It includes a head-mounted RGB camera (head_camera_rgb_frame) and a depth camera (head_camera_depth_frame). These cameras, attached via fixed joints, are capable of providing visual and depth information from the head. Additionally, a camera is mounted on the articulated arm (articulated_agent_arm_camera), which aids in close proximity object manipulation tasks. The fixed laser link suggests the presence of a laser sensor that could provide additional sensing capabilities for navigation and mapping.",
+    "summary": "Fetch is equipped with several sensors for perception. It has a color and depth camera mounted on a pan-tilt head, which allows it to adjust its field of view both horizontally and vertically. The height of the head can be adjusted using the torso lift mechanism, enhancing its ability to perceive objects at different heights and angles. Additionally, a laser sensor is available, possibly for distance measurement and mapping purposes. This array of sensors allows the robot to effectively locate and identify objects in its environment, capturing geometric information necessary for manipulation tasks.",
     "cameras_info": {
       "articulated_agent_arm_camera": {
         "height": 0.7860100000000001,
@@ -18,7 +18,7 @@
     }
   },
   "manipulation": {
-    "summary": "The Fetch robot's manipulation system is highly capable, featuring multiple joints that allow for significant dexterity. It has a 7 Degrees of Freedom (DoF) arm including joints such as shoulder_pan, shoulder_lift, upperarm_roll, elbow_flex, forearm_roll, wrist_flex, and wrist_roll, providing ample flexibility for complex manipulation tasks. The arm is terminated with a gripper comprising prismatic joints for the right and left fingers (r_gripper_finger_link and l_gripper_finger_link). This allows the robot to grasp and manipulate objects of varying sizes and shapes effectively.",
+    "summary": "The Fetch robot features a sophisticated manipulator arm with multiple degrees of freedom, including joints that can pan, lift, roll, and flex. The arm has both elbow and wrist joints that provide significant flexibility and reach. The end effector is a gripper with prismatic joints allowing for fine adjustments needed for gripping objects. There is also an articulated camera near the gripper to provide close-up visual feedback during manipulation tasks. The versatile design of the arm allows Fetch to engage in complex manipulation tasks, such as picking and placing objects from high shelves or under tables, accommodating various object sizes and shapes.",
     "arm_workspace": {
       "center": [
         0.14739853143692017,

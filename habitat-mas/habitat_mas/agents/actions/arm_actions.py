@@ -9,10 +9,10 @@ from ..crab_core import action
 @action
 def pick(target_obj: str):
     """
-    Pick an object.
+    Pick up the any_targets object. This action can only be executed under the following conditions: (1) You must not already be holding the any_targets object, and (2) You must be exactly at the any_targets position. After successfully executing this action, you will be holding the any_targets object while remaining at the any_targets position.
     
     Args:
-        target_obj: The object to pick.
+        target_obj: The any_targets object to pick.
     """
     pass
 
@@ -20,11 +20,11 @@ def pick(target_obj: str):
 @action
 def place(target_obj: str, target_location: str):
     """
-    Place an object.
+    Place the any_targets object at the TARGET_any_targets position. This action can only be executed under the following conditions: (1) You must be holding the any_targets object, and (2) You must be precisely at the TARGET_any_targets position. After successfully executing this action, you will no longer be holding the any_targets object, and it will be positioned at the TARGET_any_targets position.
     
     Args:
-        target_obj: The object to place.
-        target_location: The location to place the object.
+        target_obj: The any_targets object to place.
+        target_lo: The TARGET_any_targets position to place the any_targets object.
     """
     pass
 
@@ -32,6 +32,6 @@ def place(target_obj: str, target_location: str):
 @action
 def reset_arm():
     """
-    Reset Arm.
+    Reset your arm to its default position. This action can only be executed if you have an arm and is typically called after performing pick-and-place actions.
     """
     pass

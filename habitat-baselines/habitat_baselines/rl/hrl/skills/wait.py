@@ -8,6 +8,7 @@ import gym.spaces as spaces
 import torch
 
 from habitat_baselines.rl.hrl.skills.skill import SkillPolicy
+from habitat_baselines.rl.hrl.utils import find_action_range
 from habitat_baselines.rl.ppo.policy import PolicyActionData
 
 
@@ -20,6 +21,7 @@ class WaitSkillPolicy(SkillPolicy):
     ):
         super().__init__(config, action_space, batch_size, True)
         self._wait_time = -1
+        self._wait_ac_idx, _ = find_action_range(action_space, "wait")
 
     def _parse_skill_arg(self, skill_name: str, skill_arg: str) -> Any:
         self._wait_time = int(skill_arg[0])
@@ -40,9 +42,12 @@ class WaitSkillPolicy(SkillPolicy):
         cur_batch_idx,
         deterministic=False,
     ):
-        action = torch.zeros(
+        full_action = torch.zeros(
             (masks.shape[0], self._full_ac_size), device=prev_actions.device
         )
+
+        full_action[:, self._wait_ac_idx] = 1
+
         return PolicyActionData(
-            actions=action, rnn_hidden_states=rnn_hidden_states
+            actions=full_action, rnn_hidden_states=rnn_hidden_states
         )

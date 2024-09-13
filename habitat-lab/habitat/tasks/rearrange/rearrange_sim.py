@@ -282,7 +282,9 @@ class RearrangeSim(HabitatSim):
         self._handle_to_goal_name = ep_info.info["object_labels"]
 
         self.ep_info = ep_info
-        new_scene = self.prev_scene_id != ep_info.scene_id
+        mp3d = 'dataset' in ep_info.info and ep_info.info['dataset'] == 'mp3d'
+
+        new_scene = self.prev_scene_id != ep_info.scene_id or mp3d
         if new_scene:
             self._prev_obj_names = None
 
@@ -290,7 +292,7 @@ class RearrangeSim(HabitatSim):
         ep_info.rigid_objs = sorted(ep_info.rigid_objs, key=lambda x: x[0])
         obj_names = [x[0] for x in ep_info.rigid_objs]
         # Only remove and re-add objects if we have a new set of objects.
-        should_add_objects = self._prev_obj_names != obj_names
+        should_add_objects = self._prev_obj_names != obj_names or mp3d
         self._prev_obj_names = obj_names
 
         self.agents_mgr.pre_obj_clear()
@@ -496,7 +498,7 @@ class RearrangeSim(HabitatSim):
 
         for attempt_i in range(max_attempts):
 
-            # TODO(YCC): start pos should be able to navigate to the target
+            # start pos should be able to navigate to the target
             start_pos = self.pathfinder.get_random_navigable_point(
                 island_index=self._largest_indoor_island_idx
             )
@@ -525,7 +527,7 @@ class RearrangeSim(HabitatSim):
                 f"Could not find a collision free start for {self.ep_info.episode_id}"
             )
 
-        # TODO(YCC): collect the robot setup   
+        # collect the robot setup   
         if self.habitat_config.w2j:
             self.write_to_json(start_pos, start_rot, agent_idx)
 
@@ -599,6 +601,11 @@ class RearrangeSim(HabitatSim):
                 if not rom.get_library_has_id(scene_obj_id):
                     continue
                 rom.remove_object_by_id(scene_obj_id)
+
+            if 'dataset' in self.ep_info.info and self.ep_info.info['dataset'] == 'mp3d':
+                for obj_handle in rom.get_object_handles():
+                    rom.remove_object_by_handle(obj_handle)
+
             self._scene_obj_ids = []
 
         # Reset all marker visualization points
@@ -742,10 +749,6 @@ class RearrangeSim(HabitatSim):
             self._receptacles = self._create_recep_info(
                 ep_info.scene_id, list(self._handle_to_object_id.keys())
             )
-            if 'dataset' in ep_info.info and ep_info.info['dataset'] == 'mp3d':
-                receps = self.set_receptacle_in_scene(ep_info)
-                self._receptacles_cache[ep_info.scene_id] = receps
-                self._receptacles = receps
     
             ao_mgr = self.get_articulated_object_manager()
             # Make all articulated objects (including the robots) kinematic
@@ -757,6 +760,11 @@ class RearrangeSim(HabitatSim):
                     for motor_id in ao.existing_joint_motor_ids:
                         ao.remove_joint_motor(motor_id)
                 self.art_objs.append(ao)
+
+        if 'dataset' in ep_info.info and ep_info.info['dataset'] == 'mp3d':
+            receps = self.set_receptacle_in_scene(ep_info)
+            self._receptacles_cache[ep_info.scene_id] = receps
+            self._receptacles = receps
 
     def _create_recep_info(
         self, scene_id: str, ignore_handles: List[str]
@@ -1175,6 +1183,10 @@ class RearrangeSim(HabitatSim):
             target_receptacle = rom.add_object_by_template_handle(
                 tar_path
             )
+            if self._kinematic_mode:
+                target_receptacle.motion_type = habitat_sim.physics.MotionType.KINEMATIC
+                target_receptacle.collidable = False
+
             target_receptacle.transformation = mn.Matrix4(
                 [[tar_tranform[j][i] for j in range(4)] for i in range(4)]
             )
@@ -1207,6 +1219,9 @@ class RearrangeSim(HabitatSim):
             goal_receptacle = rom.add_object_by_template_handle(
                 goal_path
             )
+            if self._kinematic_mode:
+                goal_receptacle.motion_type = habitat_sim.physics.MotionType.KINEMATIC
+                goal_receptacle.collidable = False
             goal_receptacle.transformation = mn.Matrix4(
                 [[goal_transform[j][i] for j in range(4)] for i in range(4)]
             )

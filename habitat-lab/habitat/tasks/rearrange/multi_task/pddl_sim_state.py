@@ -167,15 +167,18 @@ class PddlRobotState:
         if isinstance(self.pos, PddlEntity):
             targ_pos = sim_info.get_entity_pos(self.pos)
             robot = sim_info.sim.get_agent_data(robot_id).articulated_agent
+            info = sim_info.sim.ep_info.info
+            mp3d = 'dataset' in info and info['dataset'] == 'mp3d'
 
             # Get the base transformation
             T = robot.base_transformation
             # Do transformation
             pos = T.inverted().transform_point(targ_pos)
             # Project to 2D plane (x,y,z=0)
-            pos[2] = 0.0
+            if not mp3d:
+                pos[2] = 0.0
 
-            # Compute distance
+            # Compute distance  
             dist = np.linalg.norm(pos)
 
             # Unit vector of the pos

@@ -29,6 +29,7 @@ from habitat.tasks.rearrange.utils import (
     rearrange_logger,
 )
 from habitat_mas.tasks.habitat_mas_sensors import get_text_context
+from habitat.tasks.rearrange.reflect_sensor import get_env_start_text
 
 
 @registry.register_task(name="RearrangeEmptyTask-v0")
@@ -75,6 +76,7 @@ class RearrangeTask(NavigationTask):
         self.n_objs = len(dataset.episodes[0].targets)
 
         super().__init__(sim=sim, dataset=dataset, **kwargs)
+        self._physics_target_sps = kwargs['config'].physics_target_sps
         self.is_gripper_closed = False
         self._sim: RearrangeSim = sim
         self._ignore_collisions: List[Any] = []
@@ -114,7 +116,7 @@ class RearrangeTask(NavigationTask):
 
         # Load robot config file
         robot_config_path = dataset.config.robot_config
-        if osp.exists(robot_config_path):
+        if osp.exists(robot_config_path) and not self._dataset.config.randomize_agent_start:
             with open(robot_config_path, "r") as robot_config_file:
                 robot_config = json.load(robot_config_file)
             self._robot_config = robot_config
@@ -422,10 +424,18 @@ class RearrangeTask(NavigationTask):
         current_episode_idx = self._sim.ep_info.episode_id
 
         if not self._robot_config or current_episode_idx not in self._robot_config:
-        # load agent with dummy position
+        # load agent with new sampled position
             robot_config = []
             for agent_idx in range(self._sim.num_articulated_agents):
+                (
+                    articulated_agent_pos,
+                    articulated_agent_rot,
+                ) = self._sim.set_articulated_agent_base_to_random_point(
+                    agent_idx=agent_idx
+                )
                 agent_config = self._sim.parse_agent_info(
+                    start_pos=articulated_agent_pos,
+                    start_rot=articulated_agent_rot,
                     agent_idx = agent_idx
                 )
                 robot_config.append(agent_config)
@@ -456,3 +466,19 @@ class RearrangeTask(NavigationTask):
                 f"-----Episode {self._episode_id} requested to end after {self._cur_episode_step} steps.-----"
             )
             rearrange_logger.debug("-" * 40)
+
+    def get_env_start_text(self):
+        current_episode_idx = self._sim.ep_info.episode_id
+
+        if not self._robot_config or current_episode_idx not in self._robot_config:
+        # load agent with dummy position
+            robot_config = []
+            for agent_idx in range(self._sim.num_articulated_agents):
+                agent_config = self._sim.parse_agent_info(
+                    agent_idx = agent_idx
+                )
+                robot_config.append(agent_config)
+        else:   
+            assert "agents" in self._robot_config[current_episode_idx]
+            robot_config = self._robot_config[current_episode_idx]["agents"]
+        return get_env_start_text(self._sim, robot_config)

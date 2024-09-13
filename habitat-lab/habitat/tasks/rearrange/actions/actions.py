@@ -267,10 +267,10 @@ class ResetArmAction(ArmAction):
             "a_selection_of_base_or_arm" in self._task.actions
             and not self._task.actions["a_selection_of_base_or_arm"].select_arm
         ):
-            return self.ee_target
+            return
         else:
-            self.ee_target = self.arm_ctrlr.step(arm_action)
-            return self.ee_target
+            self.arm_ctrlr.step(arm_action)
+            return
 
 
 @registry.register_task_action
@@ -593,7 +593,7 @@ class BaseVelAction(ArticulatedAgentAction):
                 )
             }
         )
-    
+
     def _load_animation(self):
         """
         The function loads the leg animation data from a csv file.
@@ -721,7 +721,7 @@ class BaseVelAction(ArticulatedAgentAction):
             self.cur_articulated_agent.leg_joint_pos = (
                 self.cur_articulated_agent.params.leg_init_params
             )
-            
+
     def vel_ctrl(self, lin_vel, ang_vel):
         self.base_vel_ctrl.linear_velocity = mn.Vector3(lin_vel, 0, 0)
         self.base_vel_ctrl.angular_velocity = mn.Vector3(0, ang_vel, 0)
@@ -806,7 +806,7 @@ class BaseVelNonCylinderAction(ArticulatedAgentAction):
                     )
                 }
             )
-        
+
     def _load_animation(self):
         """
         The function loads the leg animation data from a csv file.
@@ -1127,3 +1127,28 @@ class HumanoidJointAction(ArticulatedAgentAction):
                 self.cur_articulated_agent.set_joint_transform(
                     new_joints, new_transform_offset, new_transform_base
                 )
+
+@registry.register_task_action
+class WaitAction(ArticulatedAgentAction):
+    """An action that causes the agent to wait, with a boolean action space."""
+
+    def __init__(self, *args, config, sim: RearrangeSim, **kwargs):
+        super().__init__(*args, config=config, sim=sim, **kwargs)
+        self.wait_steps = 0
+
+    @property
+    def action_space(self):
+        # The action space is a single boolean, where True means wait and False means don't wait.
+        return spaces.Dict({
+            self._action_arg_prefix + "wait": spaces.Box(low=0, high=1, shape=(1,), dtype=np.float32)
+        })
+
+    def step(self, *args, **kwargs):
+        # The agent simply waits, so there's no change in position or state.
+        wait_action = kwargs[self._action_arg_prefix + "wait"]
+        if wait_action:
+            self.wait_steps += 1
+    
+    def reset(self, *args, **kwargs):
+        self.wait_steps = 0
+        super().reset()

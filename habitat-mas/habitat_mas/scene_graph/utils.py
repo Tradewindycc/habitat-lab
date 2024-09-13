@@ -167,27 +167,52 @@ def generate_objects_description(sim, object_layer):
     description = "There are {} objects in the scene.\n".format(len(object_layer.obj_ids))
     for obj_id in object_layer.obj_ids:
         obj = object_layer.obj_dict[obj_id]
-        obj_name = sim._handle_to_goal_name[obj.full_name]
+
+        if obj.full_name in sim._handle_to_goal_name:
+            obj_name = sim._handle_to_goal_name[obj.full_name]
+        elif obj.label:
+            obj_name = obj.label
         if obj.full_name is None:
             obj_name = "any_targets|" + str(obj_id)
-        description += f"{obj_name} is at position {np.array(obj.center)}. "
+        
+        position = np.array(obj.center)
+        description += f"{obj_name} is at position {[f'{p:.1f}' for p in position]}. "
         # add height and distance information
-        description += f"The height of the object is {obj.center[1]}.\n"
-        island_areas = [
-            (island_ix, sim.pathfinder.island_area(island_index=island_ix))
-            for island_ix in range(sim.pathfinder.num_islands)
-        ]
-        horizontal_dist = np.inf
-        for nav_island in range(len(island_areas)):
-            snap_pos = sim.pathfinder.snap_point(obj.center, nav_island)
-            if not np.isnan(snap_pos).any():
-                horizontal_dist = np.linalg.norm(
-                    np.array(snap_pos)[[0, 2]] - np.array(obj.center)[[0, 2]]
-                )
-                break
-        description += f"The horizontal distance of {obj_name} to the nearest navigable point is {horizontal_dist}.\n"
-        if horizontal_dist == np.inf:
-            description += f"`inf` means the pathfinder cannot find any navigable point near the object.\n"
+        if not obj.label or obj.label.startswith("any_targets"):
+            description += f"The height of the object is {position[1]:.1f}.\n"
+            island_areas = [
+                (island_ix, sim.pathfinder.island_area(island_index=island_ix))
+                for island_ix in range(sim.pathfinder.num_islands)
+            ]
+            horizontal_dist = np.inf
+            for nav_island in range(len(island_areas)):
+                snap_pos = sim.pathfinder.snap_point(obj.center, nav_island)
+                if not np.isnan(snap_pos).any():
+                    horizontal_dist = np.linalg.norm(
+                        np.array(snap_pos)[[0, 2]] - np.array(obj.center)[[0, 2]]
+                    )
+                    break
+            description += f"The horizontal distance of {obj_name} to the nearest navigable point is {horizontal_dist:.1f}.\n"
+            if horizontal_dist == np.inf:
+                description += f"`inf` means the pathfinder cannot find any navigable point near the object.\n"
+
+    return description
+
+def generate_mp3d_objects_description(object_layer):
+    """
+    Generate description of objects, used when region layer is not empty
+    """
+    description = "There are {} objects in the scene.\n".format(len(object_layer.obj_ids))
+    for obj_id in object_layer.obj_ids:
+        obj = object_layer.obj_dict[obj_id]
+        assert obj.parent_region, f"{obj.full_name} has no parent region"
+        parent_region = obj.parent_region
+        obj_name = obj.label
+        if not obj.label:
+            obj_name = obj.full_name
+        
+        position = np.array(obj.center)
+        description += f"{obj_name} is at position {[f'{p:.1f}' for p in position]}, in {parent_region.class_name} on {parent_region.parent_level} floor. \n"
 
     return description
 
@@ -200,7 +225,8 @@ def generate_agents_description(agent_layer, region_layer, nav_mesh):
         for agent_id in agent_layer.agent_ids:
             agent = agent_layer.agent_dict[agent_id]
             agent_name = agent.agent_name
-            agent_description += f"{agent_name} is at position {agent.position}.\n"
+            agent_pos = agent.position
+            agent_description += f"{agent_name} is at position {[f'{p:.1f}' for p in agent_pos]}.\n"
             
     else:
         agents_region_ids = agent_layer.get_agents_region_ids(nav_mesh)
@@ -211,76 +237,32 @@ def generate_agents_description(agent_layer, region_layer, nav_mesh):
     
     return agent_description
 
+def generate_mp3d_agents_description(agent_layer, region_layer):
+    agent_description = "There are {} agents in the scene.\n".format(len(agent_layer.agent_ids))
+    for agent_id in agent_layer.agent_ids:
+        agent = agent_layer.agent_dict[agent_id]
+        agent_name = agent.agent_name
+        agent_pos = agent.position
 
-#TODO(YCC): specify the type of the receptacle: rigid or articulated
-def gernerate_receptacles_description(sim):
-    receptacle_description = ""
-    all_aabbreceptacles = find_receptacles(sim)
-    # all_navigable_receps = get_navigable_receptacles(sim, all_receptacles, -1)
-    recep_dict = {
-        "target": {},
-        "goal": {}
-    }
-    target_receptacles, goal_receptacles = [], []
-    for i in range(len(sim.ep_info.target_receptacles)):
-        target_recep = sim.ep_info.target_receptacles[i][0]
-        target_receptacles.append(target_recep)
-        recep_dict["target"][target_recep] = {
-            "type": "none",
-            "aabb_receptacles": [],
-            "markers": []
-        }
- 
-    for i in range(len(sim.ep_info.goal_receptacles)):
-        goal_recep = sim.ep_info.goal_receptacles[i][0]
-        goal_receptacles.append(goal_recep)
-        recep_dict["goal"][goal_recep] = {
-            "type": "none",
-            "aabb_receptacles": [],
-            "markers": []
-        }
+        find_agent_in_region = False
+        for region_id in region_layer.region_ids:
+            region_node = region_layer.region_dict[region_id]
+            region_bb = region_node.bbox
 
-    markers = sim.ep_info.markers
-    obj_mgr = sim.get_rigid_object_manager()
-    ao_mgr = sim.get_articulated_object_manager()
-
-    articulated_map = {True: "articulated", False: "rigid"}
-
-    # save the type of receptacle and 
-    for aabb_receptacle in all_aabbreceptacles:
-        parent_handle = aabb_receptacle.parent_object_handle
-        is_articulated = aabb_receptacle.is_parent_object_articulated
-        if parent_handle in target_receptacles:
-            recep_dict["target"][parent_handle]["type"] = articulated_map[is_articulated]
-            recep_dict["target"][parent_handle]["aabb_receptacles"].append(aabb_receptacle.name)
-        if parent_handle in goal_receptacles:
-            recep_dict["goal"][parent_handle]["type"] = articulated_map[is_articulated]
-            recep_dict["goal"][parent_handle]["aabb_receptacles"].append(aabb_receptacle.name)
-
-    # save the marker on receptacle
-    for marker in markers:
-        marker_object = marker['params']['object']
-        if marker_object in target_receptacles:
-            recep_dict["target"][marker_object]["markers"].append(
-                {"name": marker['name'], "link": marker['params']['link']}
-            )
-        if marker_object in goal_receptacles:
-            recep_dict["goal"][marker_object]["markers"].append(
-                {"name": marker['name'], "link": marker['params']['link']}
-            )
+            if np.all(agent_pos >= region_bb[0]) and np.all(agent_pos <= region_bb[1]):
+                region_name = region_node.class_name + "_" + str(region_id)
+                parent_level = region_node.parent_level
+                find_agent_in_region = True
+                break
         
+        agent_pos = [f'{p:.1f}' for p in agent_pos]
+        if not find_agent_in_region:
+            agent_description += f"{agent_name} is at position {agent_pos}.\n"
+        else:
+            agent_description += f"{agent_name} is at position {agent_pos}, in {region_name} on {parent_level} floor.\n"
+        
+    return agent_description
 
-    tar_recep_num = len(recep_dict["target"])
-    goal_recep_num = len(recep_dict["goal"])
-
-    receptacle_description += "There are {} target receptacles and {} goal receptacles in the scene. ".format(tar_recep_num, goal_recep_num)
-    receptacle_description += "For target receptacles:"
-    for parent_handle, receptacles_info in recep_dict['target'].items():
-        receptacle_description += f"{parent_handle} is a {receptacles_info['type']} object which contains {str(receptacles_info['aabb_receptacles'])} to place objects and markers {str(receptacles_info['markers'])} to iteract with robot.\n "
-    receptacle_description += "For goal receptacles:"
-    for parent_handle, receptacles_info in recep_dict['goal'].items():
-        receptacle_description += f"{parent_handle} is a {receptacles_info['type']} object which contains {str(receptacles_info['aabb_receptacles'])} to place objects and markers {str(receptacles_info['markers'])} to iteract with robot.\n "
-    return receptacle_description
 
 ############ Visualization ############################
 

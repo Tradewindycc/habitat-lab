@@ -89,6 +89,7 @@ class ObjectLayer:
         colors=None,
         normals=None,
         bbox=None,
+        parent_region=None,
     ):
         # add object node
         if id == None or id in self.obj_ids:
@@ -102,7 +103,7 @@ class ObjectLayer:
 
         self.obj_ids.append(id)
         obj_node = ObjectNode(
-            id, center, rotation, size, class_name=class_name, label=label, full_name=full_name, description=description
+            id, center, rotation, size, class_name=class_name, label=label, full_name=full_name, description=description, parent_region=parent_region
         )
 
         if vertices is not None:

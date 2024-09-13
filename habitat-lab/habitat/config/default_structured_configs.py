@@ -55,6 +55,7 @@ __all__ = [
     "HumanoidJointActionConfig",
     "HumanoidPickActionConfig",
     "RearrangeStopActionConfig",
+    "WaitActionConfig",
     "OracleNavActionConfig",
     "SelectBaseOrArmActionConfig",
     # REARRANGEMENT LAB SENSORS
@@ -344,6 +345,14 @@ class ResetArmActionConfig(ArmActionConfig):
     grip_controller: str = "MagicGraspAction"
     grasp_thresh_dist: float = 0.05
     render_ee_target: bool = True
+
+@dataclass
+class WaitActionConfig(ActionConfig):
+    r"""
+    WaitAction config for Rearrangement tasks.
+    """
+    type: str = "WaitAction"
+    wait_steps: int = 1
 
 @dataclass
 class StretchOraclePickActionConfig(ArmActionConfig):
@@ -916,9 +925,24 @@ class HSSDSceneDescriptionSensorConfig(LabSensorConfig):
     type: str = "HSSDSceneDescriptionSensor"
 
 @dataclass
+class MP3DSceneDescriptionSensorConfig(LabSensorConfig):
+    type: str = "MP3DSceneDescriptionSensor"
+
+@dataclass
 class RobotResumeSensorConfig(LabSensorConfig):
     type: str = "RobotResumeSensor"
     robot_resume_dir: str = "robot_resume"
+
+@dataclass 
+class MarkerVisualizeSensorConfig(LabSensorConfig):
+    type: str = "MarkerVisualizeSensor"
+    uuid: str = "marker_visualize"
+    agent_idx: int = 0
+
+@dataclass
+class EnvStartTextSensorConfig(LabSensorConfig):
+    type: str = "EnvStartTextSensor"
+    uuid: str = "env_start_text"
 
 @dataclass
 class OtherAgentGpsConfig(LabSensorConfig):
@@ -2376,6 +2400,12 @@ cs.store(
     node=RearrangeStopActionConfig,
 )
 cs.store(
+    package="habitat.task.actions.wait",
+    group="habitat/task/actions",
+    name="wait",
+    node=WaitActionConfig,
+)
+cs.store(
     package="habitat.task.actions.a_selection_of_base_or_arm",
     group="habitat/task/actions",
     name="a_selection_of_base_or_arm",
@@ -2804,10 +2834,28 @@ cs.store(
     node=HSSDSceneDescriptionSensorConfig,
 )
 cs.store(
+    package="habitat.task.lab_sensors.mp3d_scene_description",
+    group="habitat/task/lab_sensors",
+    name="mp3d_scene_description",
+    node=MP3DSceneDescriptionSensorConfig,
+)
+cs.store(
     package="habitat.task.lab_sensors.robot_resume",
     group="habitat/task/lab_sensors",
     name="robot_resume",
     node=RobotResumeSensorConfig,
+)
+cs.store(
+    package="habitat.task.lab_sensors.marker_visualize_sensor",
+    group="habitat/task/lab_sensors",
+    name="marker_visualize_sensor",
+    node=MarkerVisualizeSensorConfig,
+)
+cs.store(
+    package="habitat.task.lab_sensors.env_start_text",
+    group="habitat/task/lab_sensors",
+    name="env_start_text",
+    node=EnvStartTextSensorConfig,
 )
 
 cs.store(

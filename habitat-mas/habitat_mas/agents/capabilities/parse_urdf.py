@@ -240,9 +240,9 @@ def query_llm_with_urdf(urdf: URDF, model_name="gpt-4o", task_text=default_tasks
     system_prompt = """
 You are a robot urdf structure reasoner. You will be given a robot's urdf tree-structured text, and you need to provide a summary of the robot's physics capabilities.
 Please pay attention to the task and summarize the mobility, perception, and manipulation capabilities of the robot that are relevant to the task.
-For the mobility capability, you should consider the robot's base type, the moving capability on/in the ground type or the air. 
-For the perception capability, you should consider the robot's sensors, especially the cameras, their types and positions.
-For the manipulation capability, you should consider the robot's end effectors and the joints that allow the robot to manipulate objects.
+For the robot's mobility capability, consider the robot's base type (e.g., flying, walking, wheeled), as well as its ability to navigate different environments (e.g., across floors, on various ground types, or in the air). Specifically, evaluate the robot's ability to move between floors, factoring in whether it can fly, walk up stairs, or is limited to ground-level movement on wheels.
+For the robot's perception capability, take into account the robot's sensor configuration, with a focus on the cameras. Consider the positions of sensors, particularly in relation to their height and field of view, to understand how they impact the robot's overall perception ability.
+For the robot's manipulation capability, consider both the end effectors and the joints that enable the robot to interact with objects. Additionally, assess the workspace of the manipulator, including the height and horizontal reach of the arm, the degrees of freedom at each joint, and how these factors influence the robot's ability to effectively manipulate objects in its environment.
 The response should be a JSON object with each capability as a dictionary, containing a summary field:
 {
     "mobility": {"summary": ...},

@@ -11,7 +11,9 @@ import copy
 import plotly.graph_objects as go
 from scipy import stats
 from habitat_sim import Simulator
+from habitat.tasks.rearrange.rearrange_sim import RearrangeSim
 from habitat_sim.agent import AgentState
+from habitat.articulated_agents.mobile_manipulator import MobileManipulator
 
 from habitat_mas.utils.constants import coco_categories, coco_label_mapping
 from habitat_mas.scene_graph.scene_graph_base import SceneGraphBase
@@ -27,7 +29,7 @@ class SceneGraphMP3D(SceneGraphBase):
 
     def __init__(self, **kwargs) -> None:
         super().__init__()
-        self.sim: Simulator = None
+        self.sim: RearrangeSim = None
         self.gt_point_cloud = None
         
         self.meters_per_grid = kwargs.get('meters_per_grid', 0.05)
@@ -37,7 +39,7 @@ class SceneGraphMP3D(SceneGraphBase):
         # Util habitat-sim v0.3.1, HM3D region annotation missing
         # self.compute_region_bbox = kwargs.get('compute_region_bbox', True)
 
-    def load_gt_scene_graph(self, sim: Simulator):
+    def load_gt_scene_graph(self, sim: RearrangeSim):
         # register habitat simulator
         self.sim = sim
         # get boundary of the scene (one-layer) and initialize map
@@ -52,6 +54,9 @@ class SceneGraphMP3D(SceneGraphBase):
             triangles=np.array(navmesh_indices).reshape(-1, 3),
         )
         
+        rom = self.sim.get_rigid_object_manager()
+        all_object_handles = rom.get_object_handles()
+
         semantic_scene = self.sim.semantic_scene
         # 2. load region layer from habitat simulator
         if self.enable_region_layer: # matterport 3D has region annotations 
@@ -76,45 +81,63 @@ class SceneGraphMP3D(SceneGraphBase):
                     region_class_name = region.category.name()
                     region_label = region.category.index()
                 
+                parent_level = region.level.id
+
                 region_node = self.region_layer.add_region(
                     region_bbox,
                     region_id=region_id,
                     class_name=region_class_name,
                     label=region_label,
+                    parent_level=parent_level
                 )
 
                 # 3. load object layer from habitat simulator
-                for obj in region.objects:
-                    if obj is not None:
-                        object_id = int(obj.id)  
-                        if self.aligned_bbox:
-                            center = obj.aabb.center
-                            rot_quat = np.array([0, 0, 0, 1])  # identity transform
-                            size = obj.aabb.sizes
-                        else:  # Use obb, NOTE: quaternion is [w,x,y,z] from habitat, need to convert to [x,y,z,w]
-                            center = obj.obb.center
-                            rot_quat = obj.obb.rotation[1, 2, 3, 0]
-                            size = obj.obb.sizes
-                            size = obj.aabb.sizes
+                for object_handle, entity_name in self.sim._handle_to_goal_name.items():
+                    assert object_handle in all_object_handles
+                    obj = rom.get_object_by_handle(object_handle)
+                    abs_obj_id = obj.semantic_id
+                    pos = obj.translation
+                    pos = np.array([pos.x, pos.y, pos.z])
 
-                        node_size = (
-                            self.meters_per_grid / self.object_grid_scale
-                        )  # treat object as a point
-                        node_bbox = np.stack(
-                            [center - node_size / 2, center + node_size / 2], axis=0
-                        )
+                    rot = obj.rotation
+
+                    is_inside = np.all(pos >= region_bbox[0]) and np.all(
+                        pos <= region_bbox[1]
+                    )
+                    if is_inside:
                         object_node = self.object_layer.add_object(
-                            center,
-                            rot_quat,
-                            size,
-                            id=object_id,
-                            class_name=obj.category.name(),
-                            label=obj.category.index(),
-                            bbox=node_bbox,
+                            center=pos,
+                            rotation=rot,
+                            id=abs_obj_id,
+                            full_name=object_handle,
+                            label=entity_name,
+                            parent_region=region_node,
                         )
-
-                        # connect object to region
                         region_node.add_object(object_node)
+                
+                if self.sim.ep_info.goal_receptacles and len(self.sim.ep_info.goal_receptacles):
+                    for target_id, goal_recep in enumerate(self.sim.ep_info.goal_receptacles):
+                        goal_recep_handle = goal_recep[0]
+                        assert goal_recep_handle in all_object_handles
+                        obj = rom.get_object_by_handle(goal_recep_handle)
+                        abs_obj_id = obj.semantic_id
+                        pos = obj.translation
+                        pos = np.array([pos.x, pos.y, pos.z])
+                        rot = obj.rotation
+
+                        is_inside = np.all(pos >= region_bbox[0]) and np.all(
+                            pos <= region_bbox[1]
+                        )
+                        if is_inside:
+                            object_node = self.object_layer.add_object(
+                                center=pos,
+                                rotation=rot,
+                                id=abs_obj_id,
+                                full_name=goal_recep_handle,
+                                label=f"TARGET_any_targets|{target_id}",
+                                parent_region=region_node,
+                            )
+                            region_node.add_object(object_node)
                     
             # 4. build region triangle adjacency graph
             # algorithm to build abstract scene graph:
@@ -127,18 +150,21 @@ class SceneGraphMP3D(SceneGraphBase):
                 self.nav_mesh.triangle_region_ids, self.nav_mesh.triangle_adjacency_list
             )
             
-            # TODO: load agent externally from habitat-lab API
-            # 5. add agent layer to scene graph 
-            for i, agent in enumerate(self.sim.agents):
-                agent_id = i
-                agent_name = agent.agent_config.body_type
-                agent_state:AgentState  = agent.get_state()
-                self.agent_layer.add_agent(
-                    agent_id, 
-                    agent_name,
-                    agent_state.position,
-                    agent_state.rotation
-                )  
+        # TODO: load agent externally from habitat-lab API
+        # 5. add agent layer to scene graph 
+        for i, agent_name in enumerate(sim.agents_mgr.agents_order):
+            agent: MobileManipulator = sim.agents_mgr[i].articulated_agent
+            agent_name = agent_name
+            
+            # Assuming agent_layer.add_agent is modified to accept more parameters
+            self.agent_layer.add_agent(
+                agent_id=i, 
+                agent_name=agent_name,
+                position=agent.base_pos,
+                orientation=agent.base_rot,
+                # Add more parameters here
+                description=sim.agents_mgr[i].cfg['articulated_agent_type']
+            )
                     
     def load_gt_geometry(self):
         # load the ply file of the scene

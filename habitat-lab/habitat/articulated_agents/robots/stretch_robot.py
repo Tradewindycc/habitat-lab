@@ -28,7 +28,7 @@ class StretchRobot(MobileManipulator):
             #     dtype=np.float32,
             # ),
             arm_init_params=np.array(
-                [0.0, 0.0, 0.13, 0.0, 0.0, 0.0, 0.0, 0.0],
+                [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
                 dtype=np.float32,
             ),
             gripper_init_params=np.array([0.0, 0.0], dtype=np.float32),
@@ -63,7 +63,7 @@ class StretchRobot(MobileManipulator):
             wheel_mtr_pos_gain=0.0,
             wheel_mtr_vel_gain=1.3,
             wheel_mtr_max_impulse=10.0,
-            base_offset=mn.Vector3(0.0, -0.5, 0.0),
+            base_offset=mn.Vector3(0.0, -0.0, 0.0),
             base_link_names={
                 "link_right_wheel",
                 "link_left_wheel",

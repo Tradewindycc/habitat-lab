@@ -18,6 +18,7 @@ class RegionNode:
         grid_size=0.1,
         class_name=None,
         label=None,
+        parent_level=None,
     ):
         # required field: minimum attributes for a region: id, bounding box
         self.region_id = region_id
@@ -29,6 +30,7 @@ class RegionNode:
         self.class_name = class_name
         self.label = label
         self.objects = []
+        self.parent_level = parent_level
         return
 
     def add_object(self, obj: ObjectNode):
@@ -63,7 +65,7 @@ class RegionLayer(nx.Graph):
         self.flag_grid_map = True
         return
 
-    def add_region(self, bbox, region_id=None, class_name=None, label=None):
+    def add_region(self, bbox, region_id=None, class_name=None, label=None, parent_level=None):
 
         # add region node
         if region_id == None or region_id in self.region_ids:
@@ -75,7 +77,7 @@ class RegionLayer(nx.Graph):
             )
             region_id = new_id
         self.region_ids.append(region_id)
-        region_node = RegionNode(region_id, bbox)
+        region_node = RegionNode(region_id, bbox, parent_level=parent_level)
         self.region_dict[region_id] = region_node
         self.add_node(region_node)
 

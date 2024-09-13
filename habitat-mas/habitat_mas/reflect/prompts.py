@@ -2,7 +2,7 @@ from habitat_mas.scene_graph import scene_description
 import openai
 
 # TODO(YCC): 1. initial prompt as a assitant. 2.each step prompt: decision maker
-system_prompt = [
+system_prompts = [
 """
 You are a helpful assistant.
 """,
@@ -19,7 +19,7 @@ You are a success verifier to indicate whether the robot subgoal is satisfied gi
 
 
 # TODO(YCC): 1. initial prompt. 2.each step prompt: execute a skill or learn a skill
-user_prompt = [
+user_prompts = [
 # 0. prompt with environment context and pddl definitions
 """
 A robot is trying to solve some tasks and learn corresponding skill in the Habitat simulator.
@@ -73,7 +73,7 @@ If you choose to design a reward function to learn a new skill: First, you shoul
 """,
 ]
 
-assistant_prompt = [
+assistant_prompts = [
 """
 {'robots': [{'robot_name': '...', 'robot_type': '...', 'mobility': '...', 'perception': '...', 'manipulation': '...'}], 'objects': [{'object_id': '...', 'object_type': '...', 'position': [...]}, ...], 'receptacles': [{'receptacle_id': '...', 'receptacle_type': '...', 'target_places': [...]}, ...], 'actions': [{'action_name': '...', 'parameters': [...]}, ...}]}
 """,

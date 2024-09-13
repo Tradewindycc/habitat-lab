@@ -2,10 +2,10 @@
   "robot_id": "SpotRobot_default",
   "robot_type": "SpotRobot",
   "mobility": {
-    "summary": "The robot 'spot' has significant mobility capabilities featured by a base connected to four legs. Each leg has three revolute joints (hip, upper leg, and lower leg), allowing for complex movements useful for navigating diverse terrains. This makes the robot capable of moving across different floor types and potentially handling multi-floor scenarios, which is critical for tasks like cross-floor object rearrangement."
+    "summary": "The robot 'Spot' features a quadrupedal base with four legs, each having three revolute joints (hip, upper leg, lower leg). This configuration provides high mobility over various terrains and allows it to walk, climb stairs, and potentially hop over obstacles, making it capable of navigating multi-floor environments."
   },
   "perception": {
-    "summary": "The robot is equipped with two cameras: one fixed on the head and another on the arm's end-effector. The head camera is likely used for broader environmental awareness and navigation, while the arm camera provides detailed view necessary for precision tasks, such as identifying and manipulating objects. These cameras enable cooperative perception, allowing the robot to gather geometric information about objects for precise manipulation.",
+    "summary": "The robot is equipped with two cameras: one is a fixed joint-connected head camera on the base, and the other is a fixed joint-connected articulated agent arm camera. The head camera likely provides a wide field of view from a fixed height, assisting in overall navigation and environment perception. The arm camera, positioned on the end effector, provides detailed views of objects during manipulation tasks.",
     "cameras_info": {
       "articulated_agent_arm_camera": {
         "height": 0.5770000063180923,
@@ -18,7 +18,7 @@
     }
   },
   "manipulation": {
-    "summary": "The robot features a highly articulated arm with multiple revolute joints from the shoulder to the wrist and fingers. This arm has intricate joint configurations\u2014seven revolute joints from the shoulder to the fingers\u2014which enable a wide range of movements. The end-effector includes fingers, suggesting it has grasping capabilities. This combination makes the robot adept at tasks requiring detailed manipulation, such as picking and placing objects in various positions, and addressing objects in abnormal locations like high shelves or under tables.",
+    "summary": "Spot has a versatile manipulator arm with seven revolute joints and an end effector designed for grasping (finger). The extensive joint configuration allows for a significant range of motion, including high shelves and under tables. The fixed camera on the arm aids in precise object manipulation by providing detailed visual feedback. This configuration is suitable for complex tasks such as object rearrangement and cooperative perception-based manipulation.",
     "arm_workspace": {
       "center": [
         0.218833327293396,
