@@ -227,9 +227,9 @@ class RearrangeTask(NavigationTask):
                     return np.all(distances > self._min_distance_start_agents)
 
                 filter_agent_position = _filter_agent_position
-            
+
             if self._dataset.config.randomize_agent_start:
-            
+
                 (
                     articulated_agent_pos,
                     articulated_agent_rot,
@@ -443,7 +443,7 @@ class RearrangeTask(NavigationTask):
                     agent_idx = agent_idx
                 )
                 robot_config.append(agent_config)
-        else:   
+        else:
             assert "agents" in self._robot_config[current_episode_idx]
             robot_config = self._robot_config[current_episode_idx]["agents"]
         return get_text_context(self._sim, robot_config)

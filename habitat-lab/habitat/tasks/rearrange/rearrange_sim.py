@@ -405,7 +405,7 @@ class RearrangeSim(HabitatSim):
     def parse_agent_info(self, start_pos = np.array([0.0, 0.0, 0.0]), start_rot = 0.0, agent_idx: int = 0):
         sim_config = self.habitat_config
         agents = sim_config.agents
-        
+
         assert agent_idx < len(agents), f"agent_idx {agent_idx} out of range {len(agents)}"
 
         agent_key = f"agent_{agent_idx}"
@@ -434,7 +434,7 @@ class RearrangeSim(HabitatSim):
             (False, True): "arm_only",
             (True, True): "default",
             (False, False): "none"
-        } 
+        }
 
         if agent_type == "DJIDrone":
             agent_type = "DJIDrone_default"
@@ -450,12 +450,12 @@ class RearrangeSim(HabitatSim):
             "start_rot": start_rot,
         }
         return agent_info
-        
+
     # add a write-to-json function to store robot setups
     def write_to_json(self, start_pos = np.array([0.0, 0.0, 0.0]), start_rot = 0.0, agent_idx: int = 0) -> None:
         episode_id = self.ep_info.episode_id
         agent_info = self.parse_agent_info(start_pos, start_rot, agent_idx)
-        
+
         file_path = self.habitat_config.json_path
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
         data = {}
@@ -508,7 +508,7 @@ class RearrangeSim(HabitatSim):
             if 'dataset' in self.ep_info.info and self.ep_info.info['dataset'] == 'mp3d':
                 if agent_idx == 0 and not self.navigable_far_to_target(start_pos):
                     continue
-                
+
             if filter_func is not None and not filter_func(
                 start_pos, start_rot
             ):
@@ -527,7 +527,7 @@ class RearrangeSim(HabitatSim):
                 f"Could not find a collision free start for {self.ep_info.episode_id}"
             )
 
-        # collect the robot setup   
+        # collect the robot setup
         if self.habitat_config.w2j:
             self.write_to_json(start_pos, start_rot, agent_idx)
 
@@ -749,7 +749,21 @@ class RearrangeSim(HabitatSim):
             self._receptacles = self._create_recep_info(
                 ep_info.scene_id, list(self._handle_to_object_id.keys())
             )
-    
+            if 'dataset' in ep_info.info and ep_info.info['dataset'] == 'mp3d':
+                receps = self.set_receptacle_in_scene(ep_info)
+                self._receptacles_cache[ep_info.scene_id] = receps
+                self._receptacles = receps
+            elif 'dataset' in ep_info.info and ep_info.info['dataset'] == 'hssd':
+                rom = self.get_rigid_object_manager()
+                old_recep_handle = ep_info.info['old_recep_handle']
+                recep_to_remove = rom.get_object_by_handle(old_recep_handle)
+                rom.remove_object_by_id(
+                    recep_to_remove.object_id
+                )
+                receps = self.set_desired_receptacle_in_scene(ep_info, "wall_cabinet")
+                self._receptacles_cache[ep_info.scene_id] = receps
+                self._receptacles = receps
+
             ao_mgr = self.get_articulated_object_manager()
             # Make all articulated objects (including the robots) kinematic
             for aoi_handle in ao_mgr.get_object_handles():
@@ -1192,7 +1206,7 @@ class RearrangeSim(HabitatSim):
             )
             target_receptacle.translation = tar_translation
             user_attr = target_receptacle.user_attributes
-            
+
             info["translation"] = np.array(tar_translation)
             target_receptacles.extend(
                 parse_receptacles_from_user_config(
@@ -1255,10 +1269,125 @@ class RearrangeSim(HabitatSim):
                 np.min(bounds, axis=0), np.max(bounds, axis=0)
             )
         return receps
-   
+
+    def set_desired_receptacle_in_scene(self, ep_info, receptacle_name):
+        rom = self.get_rigid_object_manager()
+        otm = self.get_object_template_manager()
+        for object_path in ep_info.additional_obj_config_paths:
+            otm.load_configs(osp.abspath(object_path))
+        assert ep_info.target_receptacles is not None and ep_info.goal_receptacles is not None
+        receptacles, target_receptacles, goal_receptacles = [], [], []
+        info = {}
+        recep_settled = []
+        for i, (tar_recep_handle, tar_tranform, tar_translation) in enumerate(ep_info.target_receptacles):
+            if receptacle_name in tar_recep_handle and tar_recep_handle not in recep_settled:
+                recep_settled.append(tar_recep_handle)
+                tar_recep_name = tar_recep_handle
+                if '_:' in tar_recep_name:
+                    tar_recep_name = tar_recep_handle[:-6]
+                tar_template = otm.get_templates_by_handle_substring(
+                    tar_recep_name
+                )
+                if not tar_template:
+                    raise ValueError(
+                        f"Template not found for object with handle {tar_recep_handle}"
+                    )
+                tar_path = list(tar_template.keys())[0]
+                with open(tar_path) as tar_file:
+                    tar_object_config = json.load(tar_file)
+                user_defined = tar_object_config['user_defined']
+                if 'scale' in user_defined:
+                    tar_scale = user_defined['scale']
+                else:
+                    tar_scale = user_defined[list(user_defined.keys())[0]]['scale']
+                target_receptacle = rom.add_object_by_template_handle(
+                    tar_path
+                )
+                if self._kinematic_mode:
+                    target_receptacle.motion_type = habitat_sim.physics.MotionType.KINEMATIC
+                    target_receptacle.collidable = False
+                tar_parent_path = os.path.dirname(tar_path)
+                target_receptacle.transformation = mn.Matrix4(
+                    [[tar_tranform[j][i] for j in range(4)] for i in range(4)]
+                )
+                target_receptacle.translation = tar_translation
+                user_attr = target_receptacle.user_attributes
+                info["translation"] = np.array(tar_translation)
+                target_receptacles.extend(
+                    parse_receptacles_from_user_config(
+                        user_attr,
+                        parent_object_handle=tar_recep_handle,
+                        parent_template_directory=tar_parent_path,
+                        info=info,
+                        scale=tar_scale,
+                    )
+                )
+        receptacles.extend(target_receptacles)
+        for i, (goal_recep_handle, goal_transform, goal_translation) in enumerate(ep_info.goal_receptacles):
+            if receptacle_name in goal_recep_handle and goal_recep_handle not in recep_settled:
+                recep_settled.append(goal_recep_handle)
+                goal_recep_name = goal_recep_handle
+                if '_:' in goal_recep_name:
+                    goal_recep_name = goal_recep_handle[:-6]
+                goal_template = otm.get_templates_by_handle_substring(
+                    goal_recep_name
+                )
+                if not goal_template:
+                    raise ValueError(
+                        f"Template not found for object with handle {goal_recep_handle}"
+                    )
+                goal_path = list(goal_template.keys())[0]
+                with open(goal_path) as goal_file:
+                    goal_object_config = json.load(goal_file)
+                user_defined = goal_object_config['user_defined']
+                if 'scale' in user_defined:
+                    goal_scale = user_defined['scale']
+                else:
+                    goal_scale = user_defined[list(user_defined.keys())[0]]['scale']
+                goal_receptacle = rom.add_object_by_template_handle(
+                    goal_path
+                )
+                if self._kinematic_mode:
+                    goal_receptacle.motion_type = habitat_sim.physics.MotionType.KINEMATIC
+                    goal_receptacle.collidable = False
+                goal_parent_path = os.path.dirname(goal_path)
+                goal_receptacle.transformation = mn.Matrix4(
+                    [[goal_transform[j][i] for j in range(4)] for i in range(4)]
+                )
+                goal_receptacle.translation = goal_translation
+                user_attr = goal_receptacle.user_attributes
+                info["translation"] = np.array(goal_translation)
+                goal_receptacles.extend(
+                    parse_receptacles_from_user_config(
+                        user_attr,
+                        parent_object_handle=goal_recep_handle,
+                        parent_template_directory=goal_parent_path,
+                        info=info,
+                        scale=goal_scale,
+                    )
+                )
+        receptacles.extend(goal_receptacles)
+
+        receps = {}
+        for recep in receptacles:
+            recep = cast(AABBReceptacle, recep)
+            local_bounds = recep.bounds
+            global_T = recep.get_global_transform(self)
+            bounds = np.stack(
+                [
+                    global_T.transform_point(local_bounds.min),
+                    global_T.transform_point(local_bounds.max),
+                ],
+                axis=0,
+            )
+            receps[recep.unique_name] = mn.Range3D(
+                np.min(bounds, axis=0), np.max(bounds, axis=0)
+            )
+        return receps
+
     def navigable_far_to_target(self, start_pos):
         path = habitat_sim.ShortestPath()
-        path.requested_start = start_pos   
+        path.requested_start = start_pos
         assert self.ep_info.target_receptacles
         path.requested_end = np.array(
             self.ep_info.target_receptacles[0][2],
@@ -1270,7 +1399,7 @@ class RearrangeSim(HabitatSim):
             start_pos
         )
 
-        # make sure the agent start pos far from the target and avoid collisions 
+        # make sure the agent start pos far from the target and avoid collisions
         if not found_path or path.geodesic_distance < 2.0 or dist_to_closest_obstacle < 0.5:
             return False
         return True
@@ -1284,7 +1413,7 @@ class RearrangeSim(HabitatSim):
             new_pos = self.pathfinder.snap_point(
                 pos, self._largest_indoor_island_idx
             )
-            
+
             regen_i = 0
             while np.isnan(new_pos[0]) and regen_i < max_iter:
                 # Increase the search radius

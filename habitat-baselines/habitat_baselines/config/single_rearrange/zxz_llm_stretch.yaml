@@ -37,7 +37,7 @@ habitat_baselines:
   evaluator:
     _target_: habitat_baselines.rl.ppo.habitat_evaluator.HabitatEvaluator
 
-  video_dir: "video_single/stretch_debug"
+  video_dir: "video_single/stretch_dist_04"
   image_dir: "video_dir/image_dir/"
 
   eval:
@@ -87,17 +87,17 @@ habitat_baselines:
               # action_name: "base_velocity_non_cylinder"
               action_name: "base_velocity"
               obs_skill_inputs: ["obj_start_sensor", "abs_obj_start_sensor", "obj_goal_sensor", "abs_obj_goal_sensor"]
-              max_skill_steps: 1500
+              max_skill_steps: 1000
             pick:
               skill_name: "OraclePickPolicy"
               action_name: "arm_pick_action"
               obs_skill_inputs: ["is_holding"]
-              max_skill_steps: 100
+              max_skill_steps: 250
             place:
               skill_name: "OraclePlacePolicy"
               action_name: "arm_place_action"
               obs_skill_inputs: []
-              max_skill_steps: 100
+              max_skill_steps: 250
             reset_arm:
               skill_name: "ResetArmSkill"
               action_name: "arm_reset_action"

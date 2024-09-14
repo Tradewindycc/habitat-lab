@@ -20,7 +20,7 @@ collision_threshold: 0.1
 dist_thresh: 0.4
 turn_thresh: 0.05
 
-# For re-computing navmesh for different bases 
+# For re-computing navmesh for different bases
 base_type: "wheel"
 agent_height: 1.0
 agent_max_climb: 0.05

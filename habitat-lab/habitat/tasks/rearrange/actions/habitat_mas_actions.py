@@ -36,9 +36,9 @@ class OracleNavDiffBaseAction(OracleNavAction):
     the index into the list of all available entities in the current scene. The
     config flag motion_type indicates whether the low level action will be a base_velocity or
     a joint control.
-    
-    Compared with OracleNavAction, this action will use different navmesh for different agent bases. 
-    
+
+    Compared with OracleNavAction, this action will use different navmesh for different agent bases.
+
     """
 
     def __init__(self, *args, **kwargs):
@@ -92,7 +92,7 @@ class OracleNavDiffBaseAction(OracleNavAction):
         #             key,
         #             attr
         #         )
-                
+
         modified_settings.agent_radius = config.agent_radius
         modified_settings.agent_height = config.agent_height
         modified_settings.agent_max_climb = config.agent_max_climb
@@ -103,16 +103,16 @@ class OracleNavDiffBaseAction(OracleNavAction):
         assert self._sim.recompute_navmesh(
             pf, modified_settings
         ), "failed to recompute navmesh"
-        
+
         # assert self._sim.recompute_navmesh(
         #     pf, self._sim.pathfinder.nav_mesh_settings
         # ), "failed to recompute navmesh"
-        
+
         # DEBUG: save recomputed navmesh
         if DEBUG_SAVE_NAVMESH:
             from habitat_mas.perception.nav_mesh import NavMesh
             import open3d as o3d
-            
+
             if self._agent_index == 0:
                 navmesh_vertices = self._sim.pathfinder.build_navmesh_vertices()
                 navmesh_indices = self._sim.pathfinder.build_navmesh_vertex_indices()
@@ -121,8 +121,8 @@ class OracleNavDiffBaseAction(OracleNavAction):
                     triangles=np.array(navmesh_indices).reshape(-1, 3),
                 )
                 o3d.io.write_triangle_mesh("navmesh_default.ply", nav_mesh.mesh)
-            
-            
+
+
             navmesh_vertices = pf.build_navmesh_vertices()
             navmesh_indices = pf.build_navmesh_vertex_indices()
             nav_mesh = NavMesh(
@@ -131,12 +131,12 @@ class OracleNavDiffBaseAction(OracleNavAction):
             )
             o3d.io.write_triangle_mesh(f"navmesh_agent_{self._agent_index}.ply", nav_mesh.mesh)
             self._sim.pathfinder = pf
-            
 
-            
+
+
         return pf
 
-    def _plot_map_and_path(self, kwargs, pathfinder: habitat_sim.nav.PathFinder, 
+    def _plot_map_and_path(self, kwargs, pathfinder: habitat_sim.nav.PathFinder,
                            save_name="sim", map_resolution=1024):
         """
         Plot the top-down map and the path on it
@@ -197,7 +197,7 @@ class OracleNavDiffBaseAction(OracleNavAction):
         )
         robot_rot = np.array(self.cur_articulated_agent.base_rot)
         # Draw the agent's position and rotation on the top-down map
-        maps.draw_agent(image=colorize_topdown_map, agent_center_coord=[x, y], 
+        maps.draw_agent(image=colorize_topdown_map, agent_center_coord=[x, y],
                         agent_rotation=robot_rot, agent_radius_px=30)
 
         return colorize_topdown_map
@@ -248,7 +248,7 @@ class OracleNavDiffBaseAction(OracleNavAction):
             {
                 self._action_arg_prefix
                 + "oracle_nav_action": spaces.Box(
-                    shape=(1,),
+                    shape=(5,),
                     low=np.finfo(np.float32).min,
                     high=np.finfo(np.float32).max,
                     dtype=np.float32,
@@ -321,18 +321,17 @@ class OracleNavDiffBaseAction(OracleNavAction):
             self.pathfinder = self._create_pathfinder(self.config)
 
         self.skill_done = False
-        nav_to_target_idx = kwargs[
+        nav_action = kwargs[
             self._action_arg_prefix + "oracle_nav_action"
         ]
-
-        if self.prev_nav_done and int(nav_to_target_idx[0]) - 1 == self.prev_match_target_id:
+        nav_to_target_idx = int(nav_action[0]) - 1
+        has_nav_action = nav_action[1]
+        if self.prev_nav_done and nav_to_target_idx == self.prev_match_target_id:
             nav_to_target_idx = 0
-        if nav_to_target_idx <= 0 or nav_to_target_idx > len(
+        if nav_to_target_idx < 0 or nav_to_target_idx > len(
             self._poss_entities
         ):
             return
-        nav_to_target_idx = int(nav_to_target_idx[0]) - 1
-
         final_nav_targ, obj_targ_pos = self._get_target_for_idx(
             nav_to_target_idx
         )
@@ -373,14 +372,17 @@ class OracleNavDiffBaseAction(OracleNavAction):
                 pad_inches=0,
             )
             # plt.close(fig)
-                
+
             self.step_sum += 1
 
         if curr_path_points is None:
             raise Exception
         else:
             # Compute distance and angle to target
-            cur_nav_targ = curr_path_points[1]
+            if has_nav_action > 0:
+                cur_nav_targ = nav_action[2:]
+            else:
+                cur_nav_targ = curr_path_points[1]
             forward = np.array([1.0, 0, 0])
             robot_forward = np.array(base_T.transform_vector(forward))
 

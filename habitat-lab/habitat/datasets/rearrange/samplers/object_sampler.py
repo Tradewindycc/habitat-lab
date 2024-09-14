@@ -7,6 +7,7 @@
 import math
 import random
 import time
+import numpy as np
 from collections import defaultdict
 from typing import Dict, List, Optional, Tuple
 
@@ -102,6 +103,8 @@ class ObjectSampler:
         recep_tracker: ReceptacleTracker,
         cull_tilted_receptacles: bool = True,
         tilt_tolerance: float = 0.9,
+        sample_mode: str = None,
+        nav_island: int = -1,
     ) -> Receptacle:
         """
         Sample a receptacle from the receptacle_set and return relevant information.
@@ -110,6 +113,8 @@ class ObjectSampler:
         :param recep_tracker: The pre-initialized ReceptacleTracker object defining available ReceptacleSets.
         :param cull_tilted_receptacles: Whether or not to remove tilted Receptacles from the candidate set.
         :param tilt_tolerance: If cull_tilted_receptacles is True, receptacles are culled for objects with local "down" (-Y), not aligned with gravity (unit dot product compared to tilt_tolerance).
+        :param sample_mode: The sampled receptacle is base on the metric of the sample_mode.
+        :param nav_island: The NavMesh island on which to check accessibility. Default -1 is the full NavMesh.
 
         :return: The sampled Receptacle. AssertionError if no valid Receptacle candidates are found.
         """
@@ -213,9 +218,73 @@ class ObjectSampler:
         assert (
             len(self.receptacle_candidates) > 0
         ), f"No receptacle instances found matching this sampler's requirements. Likely a sampler config constraint is not feasible for all scenes in the dataset. Cull this scene from your dataset? Scene='{sim.config.sim_cfg.scene_id}'. "
-        target_receptacle = self.receptacle_candidates[
-            random.randrange(0, len(self.receptacle_candidates))
+
+        ok_receptacle = []
+        min_height = 0.3
+        low_height = 0.7
+        high_height = 1.5
+        max_height = 1.7
+        min_dist = 0.3
+        close_dist = 0.7
+        far_dist = 0.85
+        max_dist = 1.1
+        # TODO(zxz): Sample the most suitable receptacle in each scene
+        if sample_mode == "distance":
+            for new_receptacle in self.receptacle_candidates:
+                rec_up_global = (
+                    new_receptacle.get_global_transform(sim)
+                    .transform_vector(new_receptacle.up)
+                    .normalized()
+                )
+                target_object_position = (
+                    new_receptacle.sample_uniform_global(
+                        sim, self.sample_region_ratio[new_receptacle.name]
+                    ) + self._translation_up_offset * rec_up_global
+                )
+                snap_pos = sim.pathfinder.snap_point(target_object_position, nav_island)
+                horizontal_dist = np.linalg.norm(
+                    np.array(snap_pos)[[0, 2]] - np.array(target_object_position)[[0, 2]]
+                )
+                if far_dist < horizontal_dist < max_dist:
+                    ok_receptacle.append(new_receptacle)
+        elif sample_mode == "height":
+            for new_receptacle in self.receptacle_candidates:
+                rec_up_global = (
+                    new_receptacle.get_global_transform(sim)
+                    .transform_vector(new_receptacle.up)
+                    .normalized()
+                )
+                target_object_position = (
+                    new_receptacle.sample_uniform_global(
+                        sim, self.sample_region_ratio[new_receptacle.name]
+                    ) + self._translation_up_offset * rec_up_global
+                )
+                new_height = target_object_position[1]
+                if high_height < new_height < max_height:
+                    ok_receptacle.append(new_receptacle)
+        else:
+            for new_receptacle in self.receptacle_candidates:
+                rec_up_global = (
+                    new_receptacle.get_global_transform(sim)
+                    .transform_vector(new_receptacle.up)
+                    .normalized()
+                )
+                target_object_position = (
+                    new_receptacle.sample_uniform_global(
+                        sim, self.sample_region_ratio[new_receptacle.name]
+                    ) + self._translation_up_offset * rec_up_global
+                )
+                snap_pos = sim.pathfinder.snap_point(target_object_position, nav_island)
+                horizontal_dist = np.linalg.norm(
+                    np.array(snap_pos)[[0, 2]] - np.array(target_object_position)[[0, 2]]
+                )
+                new_height = target_object_position[1]
+                if min_height < new_height < low_height and min_dist < horizontal_dist < close_dist:
+                    ok_receptacle.append(new_receptacle)
+        target_receptacle = ok_receptacle[
+            random.randrange(0, len(ok_receptacle))
         ]
+
         return target_receptacle
 
     def sample_object(self) -> str:
@@ -337,7 +406,8 @@ class ObjectSampler:
                         point=new_object.translation,
                         # TODO: this height is hardcoded for expected robot height and should be passed down from config
                         height=1.3,
-                        nav_to_min_distance=self.nav_to_min_distance,
+                        # nav_to_min_distance=self.nav_to_min_distance,
+                        nav_to_min_distance=-1,
                         nav_island=self.largest_island_id,
                         target_object_id=new_object.object_id,
                     ):
@@ -356,7 +426,8 @@ class ObjectSampler:
                     point=new_object.translation,
                     # TODO: this height is hardcoded for expected robot height and should be passed down from config
                     height=1.3,
-                    nav_to_min_distance=self.nav_to_min_distance,
+                    # nav_to_min_distance=self.nav_to_min_distance,
+                    nav_to_min_distance=-1,
                     nav_island=self.largest_island_id,
                     target_object_id=new_object.object_id,
                 ):

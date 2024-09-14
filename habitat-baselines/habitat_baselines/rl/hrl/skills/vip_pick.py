@@ -133,7 +133,9 @@ class VIPPickPolicy(NnSkillPolicy):
         Uses the same parameters as oracle_nav.
         :param skill_arg: a pddl predicate specifying which object the pick action should target
         """
-        if len(skill_arg) == 2:
+        if isinstance(skill_arg, dict):
+            search_target = skill_arg["target_obj"]
+        elif len(skill_arg) == 2:
             search_target, _ = skill_arg
         elif len(skill_arg) == 3:
             _, search_target, _ = skill_arg
@@ -281,7 +283,9 @@ class VIPPlacePolicy(VIPPickPolicy):
         return ~is_holding.type(torch.bool)
 
     def _parse_skill_arg(self, skill_name: str, skill_arg):
-        if len(skill_arg) == 2:
+        if isinstance(skill_arg, dict):
+            search_target = skill_arg["target_obj"]
+        elif len(skill_arg) == 2:
             search_target, _ = skill_arg
         elif len(skill_arg) == 3:
             _, search_target, _ = skill_arg

@@ -1,0 +1,34 @@
+# Since two objects are both far beyond spot's perception
+# The oracle solution should be assigning spot to detect both objects.
+objects:
+  - name: agent_0
+    expr_type: robot_entity_type
+  - name: agent_1
+    expr_type: robot_entity_type
+  - name: any_targets|0
+    expr_type: movable_entity_type
+  - name: any_targets|1
+    expr_type: movable_entity_type
+
+goal:
+  expr_type: AND
+  sub_exprs:
+    - robot_at(any_targets|0, agent_0)
+    - robot_at(any_targets|1, agent_1)
+    - detected_object(any_targets|0, agent_0)
+    - detected_object(any_targets|1, agent_1)
+
+stage_goals:
+  stage_1:
+    expr_type: AND
+    sub_exprs:
+      - robot_at(any_targets|0, agent_0)
+      - robot_at(any_targets|1, agent_1)
+  stage_2:
+    expr_type: AND
+    sub_exprs:
+      - detected_object(any_targets|1, agent_1)
+
+solution:
+  - nav_to_goal(any_targets|0, agent_0)
+  - nav_to_goal(any_targets|1, agent_1)

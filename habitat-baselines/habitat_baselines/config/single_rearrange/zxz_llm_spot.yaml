@@ -37,7 +37,7 @@ habitat_baselines:
   evaluator:
     _target_: habitat_baselines.rl.ppo.habitat_evaluator.HabitatEvaluator
 
-  video_dir: "video_single/spot_debug"
+  video_dir: "video_single/spot_hssd"
   image_dir: "video_dir/image_dir/"
 
   eval:

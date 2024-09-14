@@ -174,14 +174,14 @@ class MoveForwardActionConfig(DiscreteNavigationActionConfig):
     """
     type: str = "MoveForwardAction"
 
-@dataclass 
+@dataclass
 class MoveBackwardActionConfig(DiscreteNavigationActionConfig):
     r"""
     In Navigation tasks only, this discrete action will move the robot backward by
     a fixed amount determined by the SimulatorConfig.forward_step_size amount.
     """
     type: str = "MoveBackwardAction"
-    
+
 @dataclass
 class MoveLeftActionConfig(DiscreteNavigationActionConfig):
     r"""
@@ -189,7 +189,7 @@ class MoveLeftActionConfig(DiscreteNavigationActionConfig):
     a fixed amount determined by the SimulatorConfig.forward_step_size amount.
     """
     type: str = "MoveLeftAction"
-    
+
 @dataclass
 class MoveRightActionConfig(DiscreteNavigationActionConfig):
     r"""
@@ -197,7 +197,7 @@ class MoveRightActionConfig(DiscreteNavigationActionConfig):
     a fixed amount determined by the SimulatorConfig.forward_step_size amount.
     """
     type: str = "MoveRightAction"
-    
+
 @dataclass
 class MoveUpActionConfig(DiscreteNavigationActionConfig):
     r"""
@@ -205,7 +205,7 @@ class MoveUpActionConfig(DiscreteNavigationActionConfig):
     a fixed amount determined by the SimulatorConfig.forward_step_size amount.
     """
     type: str = "MoveUpAction"
-    
+
 @dataclass
 class MoveDownActionConfig(DiscreteNavigationActionConfig):
     r"""
@@ -531,7 +531,7 @@ class OracleNavActionConfig(ActionConfig):
     # Parameters for navmesh recomputing for different bases
     # The base type of the agent
     base_type: str = "unknown"
-    # The radius of the agent in meters 
+    # The radius of the agent in meters
     agent_radius: float = 0.25
     # The height of the agent in meters
     agent_height: float = 1.0
@@ -539,8 +539,8 @@ class OracleNavActionConfig(ActionConfig):
     agent_max_climb: float = 0.02
     # The maximum slope that is considered walkable in degrees
     agent_max_slope: float = 5.0
-    
-    
+
+
 @dataclass
 class SelectBaseOrArmActionConfig(ActionConfig):
     r"""
@@ -829,7 +829,7 @@ class PddlTextGoalSensorConfig(LabSensorConfig):
     type: str = "PddlTextGoalSensor"
     text_type: str = "description" # ["compact_str", "verbose_str", "description"]
     task_description: str = """
-The task is to have the robots navigate to/ rearrange/ perceive certain objects in the scene. 
+The task is to have the robots navigate to/ rearrange/ perceive certain objects in the scene.
 With the following conditions:"""
 
 @dataclass
@@ -863,7 +863,7 @@ class HasFinishedArmActionSensorConfig(LabSensorConfig):
 class DetectedObjectsSensorConfig(LabSensorConfig):
     type: str = "DetectedObjectsSensor"
     pixel_threshold: int = 10
-    
+
 @dataclass
 class GrippedObjectSensorConfig(LabSensorConfig):
     type: str = "GrippedObjectSensor"
@@ -888,8 +888,8 @@ class ArmWorkspaceRGBSensorConfig(LabSensorConfig):
     pixel_threshold: int = 10
     height: int = 480
     width: int = 640
-    rgb_sensor_name: str = "head_rgb"
-    depth_sensor_name: str = "head_depth"
+    rgb_sensor_name: str = "third_rgb"
+    depth_sensor_name: str = "third_rgb"
 
 @dataclass
 class NavWorkspaceRGBSensorConfig(LabSensorConfig):
@@ -2120,7 +2120,7 @@ class SimulatorConfig(HabitatBaseConfig):
     object_ids_start: int = 100
     # Configuration for rendering
     renderer: RendererConfig = RendererConfig()
-    
+
     #TODO(ycc): write to json config
     w2j: bool = False
     json_path: str = "data/robots/json/test.json"

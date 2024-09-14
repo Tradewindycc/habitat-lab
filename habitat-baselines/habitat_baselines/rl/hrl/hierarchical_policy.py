@@ -321,8 +321,8 @@ class HierarchicalPolicy(nn.Module, Policy):
         )
 
         # TODO(zxz): 设置更新sample的条件
-        if self._cur_call_high_level.sum() <= 0 and kwargs['use_vip']:
-            new_action = self._update_samples(observations, **kwargs,)
+        # if self._cur_call_high_level.sum() <= 0 and kwargs['use_vip']:
+        #     new_action = self._update_samples(observations, **kwargs,)
 
         did_choose_new_skill = self._cur_call_high_level.clone()
         if hl_info.rnn_hidden_states is not None and self._has_hl_hidden_state:

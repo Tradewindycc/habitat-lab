@@ -132,6 +132,9 @@ class HabitatEvaluator(Evaluator):
         ):
             use_vip = False
             current_episodes_info = envs.current_episodes()
+            if current_episodes_info[0].episode_id != cur_ep_id:
+                cur_ep_id = current_episodes_info[0].episode_id
+                print(f"================== current episode id: {cur_ep_id} ==================")
 
             # If all prev_actions are zero, meaning this is the start of an episode
             # Then collect the context of the episode
@@ -139,6 +142,25 @@ class HabitatEvaluator(Evaluator):
                 vip_sim_info = envs.call(["get_vip_sim_info"] * envs.num_envs)
             else:
                 vip_sim_info = {}
+            if current_episodes_info[0].episode_id != cur_ep_id:
+                cur_ep_id = current_episodes_info[0].episode_id
+                envs_text_context = envs.call(["get_task_text_context"] * envs.num_envs)
+                if 'pddl_text_goal' in batch:
+                    envs_pddl_text_goal_np = batch['pddl_text_goal'].cpu().numpy()
+                    for i in range(envs.num_envs):
+                        pddl_text_goal_np = envs_pddl_text_goal_np[i, ...]
+                        envs_text_context[i]['pddl_text_goal'] = ''.join(str(pddl_text_goal_np, encoding='UTF-8'))
+
+            # If all prev_actions are zero, meaning this is the start of an episode
+            # Then collect the context of the episode
+            if current_episodes_info[0].episode_id != cur_ep_id:
+                cur_ep_id = current_episodes_info[0].episode_id
+                envs_text_context = envs.call(["get_task_text_context"] * envs.num_envs)
+                if 'pddl_text_goal' in batch:
+                    envs_pddl_text_goal_np = batch['pddl_text_goal'].cpu().numpy()
+                    for i in range(envs.num_envs):
+                        pddl_text_goal_np = envs_pddl_text_goal_np[i, ...]
+                        envs_text_context[i]['pddl_text_goal'] = ''.join(str(pddl_text_goal_np, encoding='UTF-8'))
 
             space_lengths = {}
             n_agents = len(config.habitat.simulator.agents)
@@ -146,11 +168,13 @@ class HabitatEvaluator(Evaluator):
                 space_lengths = {
                     "index_len_recurrent_hidden_states": hidden_state_lens,
                     "index_len_prev_actions": action_space_lens,
+                    "vip_sim_info": vip_sim_info,
+                    "use_vip": use_vip,
                 }
             else:
                 space_lengths = {
                     "vip_sim_info": vip_sim_info,
-                    "use_vip": use_vip
+                    "use_vip": use_vip,
                 }
             with inference_mode():
                 action_data = agent.actor_critic.act(
