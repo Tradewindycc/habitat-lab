@@ -168,6 +168,7 @@ class HumanoidPickPolicy(NnSkillPolicy):
         masks,
         cur_batch_idx,
         deterministic=False,
+        new_action=None,
     ):
         full_action = torch.zeros(
             (masks.shape[0], self._full_ac_size), device=masks.device

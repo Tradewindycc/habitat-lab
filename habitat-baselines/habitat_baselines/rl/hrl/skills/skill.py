@@ -118,7 +118,7 @@ class SkillPolicy(Policy):
         """
         raw_skill_args = self._raw_skill_args[env_i]
         action = self._pddl_problem.actions[skill_name]
-        
+
         skill_args = []
         if isinstance(raw_skill_args, dict):
             for k, v in raw_skill_args.items():
@@ -260,6 +260,7 @@ class SkillPolicy(Policy):
         masks,
         cur_batch_idx,
         deterministic=False,
+        new_action=None
     ):
         """
         :returns: Predicted action and next rnn hidden state.
@@ -272,6 +273,7 @@ class SkillPolicy(Policy):
             masks,
             cur_batch_idx,
             deterministic,
+            new_action,
         )
 
         if self._should_keep_hold_state:
@@ -326,6 +328,7 @@ class SkillPolicy(Policy):
         masks,
         cur_batch_idx,
         deterministic=False,
+        new_action=None
     ) -> PolicyActionData:
         raise NotImplementedError()
 

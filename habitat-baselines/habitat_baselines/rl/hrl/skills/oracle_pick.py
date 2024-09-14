@@ -43,7 +43,7 @@ class OraclePickPolicy(NnSkillPolicy):
         pddl_domain_path,
         pddl_task_path,
         task_config,
-    ): 
+    ):
         super().__init__(
             wrap_policy,
             config,
@@ -56,7 +56,7 @@ class OraclePickPolicy(NnSkillPolicy):
         action_name = "arm_pick_action"
         self._pick_srt_idx, self._pick_end_idx = find_action_range(action_space, action_name)
 
-    def set_pddl_problem(self, pddl_prob): 
+    def set_pddl_problem(self, pddl_prob):
         super().set_pddl_problem(pddl_prob)
         self._all_entities = self._pddl_problem.get_ordered_entities_list()
 
@@ -69,7 +69,7 @@ class OraclePickPolicy(NnSkillPolicy):
         rnn_hidden_states,
         prev_actions,
         skill_name,
-    ): 
+    ):
         self._is_target_obj = None
         self._targ_obj_idx = None
         self._prev_angle = {}
@@ -88,7 +88,7 @@ class OraclePickPolicy(NnSkillPolicy):
     @classmethod
     def from_config(
         cls, config, observation_space, action_space, batch_size, full_config
-    ):         
+    ):
         filtered_action_space = ActionSpace(
             {config.action_name: action_space[config.action_name]}
         )
@@ -109,7 +109,7 @@ class OraclePickPolicy(NnSkillPolicy):
             ),
             full_config.habitat.task,
         )
-        
+
     def _is_skill_done(
         self,
         observations,
@@ -121,7 +121,7 @@ class OraclePickPolicy(NnSkillPolicy):
         is_holding = observations[IsHoldingSensor.cls_uuid].view(-1)
         return is_holding.type(torch.bool)
 
-    def _parse_skill_arg(self, skill_name: str, skill_arg): 
+    def _parse_skill_arg(self, skill_name: str, skill_arg):
         """
         Parses the object or container we should be picking or placing to.
         Uses the same parameters as oracle_nav.
@@ -163,7 +163,8 @@ class OraclePickPolicy(NnSkillPolicy):
         masks,
         cur_batch_idx,
         deterministic=False,
-    ): 
+        new_action=None,
+    ):
         full_action = torch.zeros(
             (masks.shape[0], self._full_ac_size), device=masks.device
         )
@@ -171,19 +172,27 @@ class OraclePickPolicy(NnSkillPolicy):
             [self._cur_skill_args[i].action_idx for i in cur_batch_idx]
         )
 
-        full_action[0][self._pick_srt_idx:self._pick_end_idx-1] = torch.tensor([action_idxs, self.PICK_ID])
+        # [pddl_id, #pick_tag, has_cord, [cords: 3], grip_tag(>=0: pick)]
+        if new_action is not None:
+            full_action[0][self._pick_srt_idx:self._pick_end_idx-1] = torch.tensor(
+                [action_idxs, self.PICK_ID, 1.0,
+                 new_action[0], new_action[1], new_action[2]])
+        else:
+            full_action[0][self._pick_srt_idx:self._pick_srt_idx+3] = torch.tensor(
+                [action_idxs, self.PICK_ID, 0.0])
+        full_action[0][self._pick_end_idx-1] = 1.0
 
         return PolicyActionData(
             actions=full_action, rnn_hidden_states=rnn_hidden_states
         )
-    
+
     def _get_coord_for_idx(self, object_target_idx):
         obj_entity = self._entities[object_target_idx]
         obj_pos = self._task.pddl_problem.sim_info.get_entity_pos(
             obj_entity
         )
         return obj_pos
-    
+
 
 class OraclePlacePolicy(OraclePickPolicy):
     """
@@ -298,6 +307,7 @@ class OraclePlacePolicy(OraclePickPolicy):
         masks,
         cur_batch_idx,
         deterministic=False,
+        new_action=None,
     ):
         full_action = torch.zeros(
             (masks.shape[0], self._full_ac_size), device=masks.device
@@ -306,7 +316,17 @@ class OraclePlacePolicy(OraclePickPolicy):
             [self._cur_skill_args[i].action_idx for i in cur_batch_idx]
         )
 
-        full_action[0][self._place_srt_idx:self._place_end_idx-1] = torch.tensor([action_idxs, self.PLACE_ID])
+        # [pddl_id, #place_tag, has_cord, [cords: 3], grip_tag(<0: place)]
+        if new_action is not None:
+            full_action[0][self._place_srt_idx:self._place_end_idx-1] = torch.tensor(
+                [action_idxs, self.PLACE_ID, 1.0,
+                 new_action[0], new_action[1], new_action[2]])
+        else:
+            full_action[0][self._place_srt_idx:self._place_srt_idx+3] = torch.tensor(
+                [action_idxs, self.PLACE_ID, 0.0])
+
+        if self._is_skill_done(observations, rnn_hidden_states, prev_actions, masks, cur_batch_idx):
+            full_action[0][self._place_end_idx-1] = -1.0
 
         return PolicyActionData(
             actions=full_action, rnn_hidden_states=rnn_hidden_states

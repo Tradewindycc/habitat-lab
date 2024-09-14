@@ -1301,7 +1301,7 @@ class HasFinishedArmActionSensor(UsesArticulatedAgentInterface, Sensor):
             use_k = f"agent_{self.agent_id}_arm_action"
         else:
             use_k = "arm_action"
-            
+
         if use_k not in self._task.actions:
             return np.array(False, dtype=np.float32)[..., None]
         else:
@@ -1420,7 +1420,7 @@ class ArmDepthBBoxSensor(UsesArticulatedAgentInterface, Sensor):
 class DetectedObjectsSensor(UsesArticulatedAgentInterface, Sensor):
     """ Sensor to detect all objects ids in the semantic sensors """
     cls_uuid: str = "detected_objects"
-    
+
     def __init__(self, sim, config, *args, **kwargs):
         super().__init__(config=config)
         self._sim = sim
@@ -1439,36 +1439,36 @@ class DetectedObjectsSensor(UsesArticulatedAgentInterface, Sensor):
     # This method assumes the existence of a method to get the semantic sensor's data
     def get_observation(self, observations, *args, **kwargs):
         """ Get the detected objects from the semantic sensor data """
-        
+
         observation_keys = list(observations.keys())
-        
+
         # Retrieve the semantic sensor data
         if self.agent_id is None:
             target_keys = [key for key in observation_keys if "semantic" in key]
         else:
             target_keys = [
-                key for key in observation_keys 
+                key for key in observation_keys
                 if f"agent_{self.agent_id}" in key and "semantic" in key
             ]
-        
+
         sensor_detected_objects = {}
-        
+
         for key in target_keys:
             semantic_sensor_data = observations[key]
-            
+
             # Count the occurrence of each object ID in the semantic sensor data
             unique, counts = np.unique(semantic_sensor_data, return_counts=True)
             objects_count = dict(zip(unique, counts))
-            
+
             # Filter objects based on the size threshold
             sensor_detected_objects[key] = [obj_id for obj_id, count in objects_count.items() if count > self.pixel_threshold]
-        
+
         # Concatenate all detected objects from all sensors
         detected_objects = np.unique(np.concatenate(list(sensor_detected_objects.values())))
-        
+
         return detected_objects
-    
-    
+
+
 @registry.register_sensor
 class ArmWorkspaceRGBSensor(UsesArticulatedAgentInterface, Sensor):
     """ Sensor to visualize the reachable workspace of an articulated arm """
@@ -1486,12 +1486,12 @@ class ArmWorkspaceRGBSensor(UsesArticulatedAgentInterface, Sensor):
         self.ctrl_lim = config.get("down_sample_voxel_size", 0.1)
 
         super().__init__(config=config)
-                
+
         self._debug_tf = config.get("debug_tf", False)
         if self._debug_tf:
             self.pcl_o3d_list = []
             self._debug_save_counter = 0
-            
+
     def _get_uuid(self, *args, **kwargs):
         # return f"agent_{self.agent_idx}_{ArmWorkspaceRGBSensor.cls_uuid}"
         return ArmWorkspaceRGBSensor.cls_uuid
@@ -1620,7 +1620,7 @@ class ArmWorkspaceRGBSensor(UsesArticulatedAgentInterface, Sensor):
 
     def get_observation(self, observations, *args, **kwargs):
         """ Get the RGB image with reachable and unreachable points marked """
-        
+
         if self.agent_id is not None:
             depth_obs = observations[f"agent_{self.agent_id}_{self.depth_sensor_name}"]
             rgb_obs = observations[f"agent_{self.agent_id}_{self.rgb_sensor_name}"]
@@ -1636,41 +1636,41 @@ class ArmWorkspaceRGBSensor(UsesArticulatedAgentInterface, Sensor):
         depth_obs = np.ascontiguousarray(depth_obs)
 
         """add semantic information"""
-        ep_objects = []
-        for i in range(len(self._sim.ep_info.target_receptacles[0]) - 1):
-            ep_objects.append(self._sim.ep_info.target_receptacles[0][i])
-        for i in range(len(self._sim.ep_info.goal_receptacles[0]) - 1):
-            ep_objects.append(self._sim.ep_info.goal_receptacles[0][i])
-        for key, val in self._sim.ep_info.info['object_labels'].items():
-            ep_objects.append(key)
-
-        objects_info = {}
-        rom = self._sim.get_rigid_object_manager()
-        for i, handle in enumerate(rom.get_object_handles()):
-            if handle in ep_objects:
-                obj = rom.get_object_by_handle(handle)
-                objects_info[obj.object_id] = handle
-        obj_id_offset = self._sim.habitat_config.object_ids_start
-
-        semantic_obs = observations[semantic_camera_name].squeeze()
-
-        mask = np.isin(semantic_obs, np.array(list(objects_info.keys())) + obj_id_offset).astype(np.uint8)
-        colored_mask = np.zeros_like(rgb_obs)
-        colored_mask[mask == 1] = [0, 0, 255]
-        rgb_obs = cv2.addWeighted(rgb_obs, 0.5, colored_mask, 0.5, 0)
-
-        for obj_id in objects_info.keys():
-            positions = np.where(semantic_obs == obj_id + obj_id_offset)
-            if positions[0].size > 0:
-                center_x = int(np.mean(positions[1]))
-                center_y = int(np.mean(positions[0]))
-                cv2.putText(rgb_obs, objects_info[obj_id], (center_x, center_y),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 1)
+        # ep_objects = []
+        # for i in range(len(self._sim.ep_info.target_receptacles[0]) - 1):
+        #     ep_objects.append(self._sim.ep_info.target_receptacles[0][i])
+        # for i in range(len(self._sim.ep_info.goal_receptacles[0]) - 1):
+        #     ep_objects.append(self._sim.ep_info.goal_receptacles[0][i])
+        # for key, val in self._sim.ep_info.info['object_labels'].items():
+        #     ep_objects.append(key)
+        #
+        # objects_info = {}
+        # rom = self._sim.get_rigid_object_manager()
+        # for i, handle in enumerate(rom.get_object_handles()):
+        #     if handle in ep_objects:
+        #         obj = rom.get_object_by_handle(handle)
+        #         objects_info[obj.object_id] = handle
+        # obj_id_offset = self._sim.habitat_config.object_ids_start
+        #
+        # semantic_obs = observations[semantic_camera_name].squeeze()
+        #
+        # mask = np.isin(semantic_obs, np.array(list(objects_info.keys())) + obj_id_offset).astype(np.uint8)
+        # colored_mask = np.zeros_like(rgb_obs)
+        # colored_mask[mask == 1] = [0, 0, 255]
+        # rgb_obs = cv2.addWeighted(rgb_obs, 0.7, colored_mask, 0.3, 0)
+        #
+        # for obj_id in objects_info.keys():
+        #     positions = np.where(semantic_obs == obj_id + obj_id_offset)
+        #     if positions[0].size > 0:
+        #         center_x = int(np.mean(positions[1]))
+        #         center_y = int(np.mean(positions[0]))
+        #         cv2.putText(rgb_obs, objects_info[obj_id], (center_x, center_y),
+        #                     cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 1)
 
         # Reproject depth pixels to 3D points
-        points_world = self._2d_to_3d(depth_camera_name, depth_obs)
+        # points_world = self._2d_to_3d(depth_camera_name, depth_obs)
         # downsample the 3d-points
-        down_sampled_points = self.voxel_grid_filter(points_world, self.down_sample_voxel_size)
+        # down_sampled_points = self.voxel_grid_filter(points_world, self.down_sample_voxel_size)
 
         # Check reachability and color points
         colors = []
@@ -1679,10 +1679,14 @@ class ArmWorkspaceRGBSensor(UsesArticulatedAgentInterface, Sensor):
         cur_articulated_agent = articulated_agent_mgr.articulated_agent
         ik_helper = articulated_agent_mgr.ik_helper
 
-        for point in down_sampled_points:
-            reachable = self._is_reachable(cur_articulated_agent, ik_helper, point)
-            # Green if reachable, red if not
-            colors.append([0, 255, 0] if reachable else [255, 0, 0])
+        # for point in down_sampled_points:
+        #     reachable = self._is_reachable(cur_articulated_agent, ik_helper, point)
+        #     # Green if reachable, red if not
+        #     colors.append([0, 255, 0] if reachable else [255, 0, 0])
+
+        cur_ee_pos = cur_articulated_agent.ee_transform().translation
+        down_sampled_points = [list(cur_ee_pos)]
+        colors = [[0, 255, 0]]
 
         pixel_coords = []
         if self._debug_tf and 'obj_pos' in kwargs:
@@ -1805,7 +1809,7 @@ class ObjectMasksSensor(UsesArticulatedAgentInterface, Sensor):
         mask = np.isin(semantic_obs, np.array(self._sim.scene_obj_ids) + obj_id_offset).astype(np.uint8)
         colored_mask = np.zeros_like(rgb_obs)
         colored_mask[mask == 1] = [0, 0, 255]
-        masked_rgb = cv2.addWeighted(rgb_obs, 0.5, colored_mask, 0.5, 0)
+        masked_rgb = cv2.addWeighted(rgb_obs, 0.7, colored_mask, 0.3, 0)
 
         for obj_id in np.array(self._sim.scene_obj_ids):
             positions = np.where(semantic_obs == obj_id + obj_id_offset)
@@ -1889,7 +1893,7 @@ class NavWorkspaceRGBSensor(ArmWorkspaceRGBSensor, UsesArticulatedAgentInterface
         mask = np.isin(semantic_obs, np.array(list(objects_info.keys())) + obj_id_offset).astype(np.uint8)
         colored_mask = np.zeros_like(rgb_obs)
         colored_mask[mask == 1] = [0, 0, 255]
-        rgb_obs = cv2.addWeighted(rgb_obs, 0.5, colored_mask, 0.5, 0)
+        rgb_obs = cv2.addWeighted(rgb_obs, 0.7, colored_mask, 0.3, 0)
 
         for obj_id in objects_info.keys():
             positions = np.where(semantic_obs == obj_id + obj_id_offset)
@@ -1906,7 +1910,8 @@ class NavWorkspaceRGBSensor(ArmWorkspaceRGBSensor, UsesArticulatedAgentInterface
         # 过滤接近地面高度的点
         ground_points_mask = np.abs(points_world[:, 1] - points_world[:, 1].min()) < 0.1
         ground_points = points_world[ground_points_mask]
-        ground_points = self._get_plane_points(ground_points)
+        # use RANSAC
+        # ground_points = self._get_plane_points(ground_points)
 
         # downsample the 3d-points
         down_sampled_points = self.voxel_grid_filter(ground_points, self.down_sample_voxel_size)
@@ -1957,7 +1962,8 @@ class NavWorkspacePointsSensor(NavWorkspaceRGBSensor):
         # 过滤接近地面高度的点
         ground_points_mask = np.abs(points_world[:, 1] - points_world[:, 1].min()) < 0.1
         ground_points = points_world[ground_points_mask]
-        ground_points = self._get_plane_points(ground_points)
+        # use RANSAC
+        # ground_points = self._get_plane_points(ground_points)
 
         # downsample the 3d-points
         down_sampled_points = self.voxel_grid_filter(ground_points, self.down_sample_voxel_size)

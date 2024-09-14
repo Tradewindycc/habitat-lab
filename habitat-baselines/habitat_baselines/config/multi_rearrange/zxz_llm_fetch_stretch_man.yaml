@@ -163,7 +163,7 @@ habitat_baselines:
             - open_fridge
             - close_cab
             - close_fridge
-            
+
     ppo:
       # ppo params
       clip_param: 0.2

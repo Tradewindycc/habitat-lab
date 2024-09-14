@@ -29,6 +29,7 @@ from habitat.tasks.rearrange.utils import (
     rearrange_logger,
 )
 from habitat_mas.tasks.habitat_mas_sensors import get_text_context
+from habitat.tasks.rearrange.vip_sensor import get_vip_sim_info
 
 
 @registry.register_task(name="RearrangeEmptyTask-v0")
@@ -226,9 +227,9 @@ class RearrangeTask(NavigationTask):
                     return np.all(distances > self._min_distance_start_agents)
 
                 filter_agent_position = _filter_agent_position
-            
+
             if self._dataset.config.randomize_agent_start:
-            
+
                 (
                     articulated_agent_pos,
                     articulated_agent_rot,
@@ -442,10 +443,15 @@ class RearrangeTask(NavigationTask):
                     agent_idx = agent_idx
                 )
                 robot_config.append(agent_config)
-        else:   
+        else:
             assert "agents" in self._robot_config[current_episode_idx]
             robot_config = self._robot_config[current_episode_idx]["agents"]
         return get_text_context(self._sim, robot_config)
+
+    def get_vip_sim_info(self) -> Dict:
+        if 'dataset' in self._sim.ep_info.info and self._sim.ep_info.info['dataset'] == 'mp3d':
+            return {}
+        return get_vip_sim_info(self._sim)
 
     @property
     def should_end(self) -> bool:

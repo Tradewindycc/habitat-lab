@@ -63,7 +63,7 @@ class FixedHighLevelPolicy(HighLevelPolicy):
                 # if the action is assigned to current agent, add it to the list
                 if param_name == "robot" and param_value.split("_")[-1] == agent_idx:
                     solution_actions.append(sol_action)
-            
+
             if self._config.add_arm_rest and i < (len(solution) - 1):
                 solution_actions.append(parse_func("reset_arm(0)"))
 

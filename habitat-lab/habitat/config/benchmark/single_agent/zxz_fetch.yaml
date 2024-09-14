@@ -38,9 +38,10 @@ defaults:
     - detected_objects_sensor
     - arm_workspace_rgb_sensor
     - object_masks_sensor
-    - nav_workspace_rgb_sensor
-    - arm_workspace_points_sensor
-    - nav_workspace_points_sensor
+    - pddl_text_goal
+    #- nav_workspace_rgb_sensor
+    #- arm_workspace_points_sensor
+    #- nav_workspace_points_sensor
 #  - /habitat/task/lab_sensors@habitat.task.lab_sensors.agents_within_threshold: agents_within_threshold
   - _self_
 

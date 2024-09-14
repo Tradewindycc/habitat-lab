@@ -41,7 +41,7 @@ class OraclePickAction(ArmEEAction, ArticulatedAgentAction):
         self._task = task
         self._entities = self._task.pddl_problem.get_ordered_entities_list()
         self._prev_ep_id = None
-        # Agent not initialized 
+        # Agent not initialized
         # self._init_cord = self.cur_articulated_agent.ee_transform().translation
         self._hand_pose_iter = 0
         self.is_reset = False
@@ -52,7 +52,7 @@ class OraclePickAction(ArmEEAction, ArticulatedAgentAction):
     @property
     def action_space(self):
         return spaces.Box(
-                    shape=(2,),
+                    shape=(6,),
                     low=np.finfo(np.float32).min,
                     high=np.finfo(np.float32).max,
                     dtype=np.float32,
@@ -65,14 +65,14 @@ class OraclePickAction(ArmEEAction, ArticulatedAgentAction):
     #         .translation
     #     )
     #     return obj_pos
-    
+
     def _get_coord_for_pddl_idx(self, object_target_idx):
         pick_obj_entity = self._entities[int(object_target_idx)]
         obj_pos = self._task.pddl_problem.sim_info.get_entity_pos(
             pick_obj_entity
         )
         return obj_pos
-    
+
     def get_scene_index_obj(self, object_target_idx):
         pick_obj_entity = self._entities[int(object_target_idx)]
         entity_name = pick_obj_entity.name
@@ -159,13 +159,17 @@ class OraclePickAction(ArmEEAction, ArticulatedAgentAction):
     def step(self, pick_action, **kwargs):
         object_pick_pddl_idx = pick_action[0]
         should_pick = pick_action[1]
+        has_pick_action = pick_action[2]
+        if has_pick_action > 0:
+            object_coord = pick_action[3:]
+        else:
+            object_coord = self._get_coord_for_pddl_idx(object_pick_pddl_idx)
 
         if object_pick_pddl_idx > len(self._entities):
             return self.ee_target
 
         if should_pick == 1:
             # or self.cur_grasp_mgr.snap_idx is None
-            object_coord = self._get_coord_for_pddl_idx(object_pick_pddl_idx)
             cur_ee_pos = self.cur_articulated_agent.ee_transform().translation
             if not self.is_reset:
                 self.ee_target = self._ik_helper.calc_fk(self.cur_articulated_agent.arm_joint_pos)
@@ -222,7 +226,7 @@ class OraclePlaceAction(OraclePickAction):
     @property
     def action_space(self):
         return spaces.Box(
-            shape=(2,),
+            shape=(6,),
             low=np.finfo(np.float32).min,
             high=np.finfo(np.float32).max,
             dtype=np.float32,
@@ -231,13 +235,17 @@ class OraclePlaceAction(OraclePickAction):
     def step(self, place_action, **kwargs):
         recep_place_pddl_idx = place_action[0]
         should_place = place_action[1]
+        has_place_action = place_action[2]
+        if has_place_action > 0:
+            recep_coord = place_action[3:]
+        else:
+            recep_coord = self._get_coord_for_pddl_idx(recep_place_pddl_idx)
 
         if recep_place_pddl_idx-1 > len(self._entities):
             return self.ee_target
 
         if should_place == 2:
             # get recep coordinates
-            recep_coord = self._get_coord_for_pddl_idx(recep_place_pddl_idx)
             cur_ee_pos = self.cur_articulated_agent.ee_transform().translation
             if not self.is_reset:
                 self.ee_target = self._ik_helper.calc_fk(self.cur_articulated_agent.arm_joint_pos)
@@ -280,7 +288,7 @@ class StretchOraclePickAction(ArmRelPosKinematicReducedActionStretch, OraclePick
     """
 
     def __init__(self, *args, config, sim: RearrangeSim, task, **kwargs):
-        super().__init__(self, *args, config=config, sim=sim, **kwargs)
+        super().__init__(self, *args, config=config, sim=sim, task=task, **kwargs)
         self._sim = sim
         self._task = task
         self._entities = self._task.pddl_problem.get_ordered_entities_list()
@@ -310,37 +318,35 @@ class StretchOraclePickAction(ArmRelPosKinematicReducedActionStretch, OraclePick
         return np.array(des_joint_pos)
 
     def step(self, pick_action, **kwargs):
-
         object_pick_pddl_idx = pick_action[0]
         should_pick = pick_action[1]
+        has_pick_action = pick_action[2]
+        if has_pick_action > 0:
+            object_coord = pick_action[3:]
+        else:
+            object_coord = self._get_coord_for_pddl_idx(object_pick_pddl_idx)
 
-        if object_pick_pddl_idx <= 0 or object_pick_pddl_idx > len(self._entities):
+        if object_pick_pddl_idx > len(self._entities):
             return self.ee_target
 
-        object_coord = self._get_coord_for_pddl_idx(object_pick_pddl_idx)
-        cur_ee_pos = self.cur_articulated_agent.ee_transform().translation
-        translation = object_coord - cur_ee_pos  
-        
-        # translation from object to end effector in base frame
-        translation_base = self.cur_articulated_agent.base_transformation.inverted().transform_vector(translation)
+        if should_pick == 1:
+            # or self.cur_grasp_mgr.snap_idx is None
+            cur_ee_pos = self.cur_articulated_agent.ee_transform().translation
+            if not self.is_reset:
+                self._sim.step_physics(1.0 / 60)
+                self.ee_target = self._ik_helper.calc_fk(self.cur_articulated_agent.arm_joint_pos)
+                self.is_reset = True
+            translation = object_coord - cur_ee_pos
 
-        should_rest = False
-        # if self.hand_state == HandState.APPROACHING:  # Approaching
-        # Only move the hand to object if has to drop or object is not grabbed
-        if should_pick == 0 or self.cur_grasp_mgr.snap_idx is None:
+            # translation from object to end effector in base frame
+            translation_base = self.cur_articulated_agent.base_transformation.inverted().transform_vector(translation)
+            should_rest = False
+            # if self.hand_state == HandState.APPROACHING:  # Approaching
+            # Only move the hand to object if has to drop or object is not grabbed
             translation_base = np.clip(translation_base, -1, 1)
+            self._ee_ctrl_lim = 0.03
             translation_base *= self._ee_ctrl_lim
             delta_pos = self.set_desired_ee_pos(translation_base)
-
-            # DEBUG VISUALIZATION
-            if self._render_ee_target:
-                global_pos = self.cur_articulated_agent.base_transformation.transform_point(
-                    self.ee_target
-                )
-                self._sim.viz_ids["ee_target"] = self._sim.visualize_position(
-                    global_pos, self._sim.viz_ids["ee_target"]
-                )
-
             if self._should_clip:
                 # clip from -1 to 1
                 delta_pos = np.clip(delta_pos, -1, 1)
@@ -362,24 +368,46 @@ class StretchOraclePickAction(ArmRelPosKinematicReducedActionStretch, OraclePick
 
             min_limit, max_limit = self.cur_articulated_agent.arm_joint_limits
 
-            set_arm_pos = (
-                expanded_delta_pos + self.cur_articulated_agent.arm_motor_pos
-            )
-            # Perform roll over to the joints so that the user cannot control
-            # the motor 2, 3, 4 for the arm.
-            if expanded_delta_pos[0] >= 0:
-                for i in range(3):
-                    if set_arm_pos[i] > max_limit[i]:
-                        set_arm_pos[i + 1] += set_arm_pos[i] - max_limit[i]
-                        set_arm_pos[i] = max_limit[i]
-            else:
-                for i in range(3):
-                    if set_arm_pos[i] < min_limit[i]:
-                        set_arm_pos[i + 1] -= min_limit[i] - set_arm_pos[i]
-                        set_arm_pos[i] = min_limit[i]
-            set_arm_pos = np.clip(set_arm_pos, min_limit, max_limit)
+            if self.cur_articulated_agent.sim_obj.motion_type == MotionType.DYNAMIC:
+                set_arm_pos = (
+                    expanded_delta_pos + self.cur_articulated_agent.arm_motor_pos
+                )
+                # Perform roll over to the joints so that the user cannot control
+                # the motor 2, 3, 4 for the arm.
+                if expanded_delta_pos[0] >= 0:
+                    for i in range(3):
+                        if set_arm_pos[i] > max_limit[i]:
+                            set_arm_pos[i + 1] += set_arm_pos[i] - max_limit[i]
+                            set_arm_pos[i] = max_limit[i]
+                else:
+                    for i in range(3):
+                        if set_arm_pos[i] < min_limit[i]:
+                            set_arm_pos[i + 1] -= min_limit[i] - set_arm_pos[i]
+                            set_arm_pos[i] = min_limit[i]
+                set_arm_pos = np.clip(set_arm_pos, min_limit, max_limit)
 
-            self.cur_articulated_agent.arm_motor_pos = set_arm_pos
+                self.cur_articulated_agent.arm_joint_pos = set_arm_pos
+            if self.cur_articulated_agent.sim_obj.motion_type == MotionType.KINEMATIC:
+                set_arm_pos = (
+                    expanded_delta_pos + self.cur_articulated_agent.arm_joint_pos
+                )
+                # Perform roll over to the joints so that the user cannot control
+                # the motor 2, 3, 4 for the arm.
+                if expanded_delta_pos[0] >= 0:
+                    for i in range(3):
+                        if set_arm_pos[i] > max_limit[i]:
+                            set_arm_pos[i + 1] += set_arm_pos[i] - max_limit[i]
+                            set_arm_pos[i] = max_limit[i]
+                else:
+                    for i in range(3):
+                        if set_arm_pos[i] < min_limit[i]:
+                            set_arm_pos[i + 1] -= min_limit[i] - set_arm_pos[i]
+                            set_arm_pos[i] = min_limit[i]
+                set_arm_pos = np.clip(set_arm_pos, min_limit, max_limit)
+
+                self.cur_articulated_agent.arm_joint_pos = set_arm_pos
+                self.cur_articulated_agent.fix_joint_values = set_arm_pos
+
 
             # DEBUG VISUALIZATION
             if self._render_ee_target:
@@ -389,5 +417,7 @@ class StretchOraclePickAction(ArmRelPosKinematicReducedActionStretch, OraclePick
                 self._sim.viz_ids["ee_target"] = self._sim.visualize_position(
                     global_pos, self._sim.viz_ids["ee_target"]
                 )
+        else:
+            self.is_reset = False
 
         return self.ee_target

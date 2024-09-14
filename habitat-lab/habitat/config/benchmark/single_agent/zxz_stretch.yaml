@@ -38,6 +38,7 @@ defaults:
     - detected_objects_sensor
     - arm_workspace_rgb_sensor
     - object_masks_sensor
+    - pddl_text_goal
     #- nav_workspace_rgb_sensor
     #- arm_workspace_points_sensor
     #- nav_workspace_points_sensor
@@ -70,10 +71,10 @@ habitat:
     task_spec_base_path: benchmark/single_agent/
     task_spec: pddl/zxz_single_agent_man
     pddl_domain_def: fp
-    robot_at_thresh: 3.0
+    robot_at_thresh: 1.0
 
   environment:
-    max_episode_steps: 750
+    max_episode_steps: 500
   simulator:
     type: RearrangeSim-v0
     seed: 100
@@ -97,7 +98,7 @@ habitat:
       agent_0:
         joint_start_noise: 0.0
   dataset:
-    data_path: data/datasets/replica_cad/single_agent_eval.json.gz
+    data_path: data/datasets/hssd_dist_04.json.gz
     # new
     randomize_agent_start: 1
     robot_config: data/robots/json/manipulation.json
