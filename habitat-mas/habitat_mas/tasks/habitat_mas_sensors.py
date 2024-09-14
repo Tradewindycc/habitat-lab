@@ -211,6 +211,14 @@ class PddlTextGoalSensor(Sensor):
             any_targets = args[0].name
             robot_id = args[1].name
             return f"{robot_id} has detected objects {any_targets}"
+        
+        elif predicate_name == "is_detected":
+            obj = args[0].name
+            return f"{obj} is detected by any robot"
+
+        elif predicate_name == "any_at":
+            obj = args[0].name
+            return f"Any robot is at object/receptacle {obj}" 
 
         else:
             return str(predicate)

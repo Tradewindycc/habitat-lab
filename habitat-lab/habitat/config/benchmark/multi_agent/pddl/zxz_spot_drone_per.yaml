@@ -17,11 +17,10 @@ objects:
 goal:
   expr_type: AND
   sub_exprs:
-    - detected_object(any_targets|1, agent_1)
-    # -
-    #   expr_type: NAND
-    #   sub_exprs:
-    #     - detected_object(any_targets|1, agent_0)
+    # - detected_object(any_targets|1, agent_1)
+    - is_detected(any_targets|1)
+    - is_detected(any_targets|0)
+
 
 stage_goals:
   drone_detected_0:
