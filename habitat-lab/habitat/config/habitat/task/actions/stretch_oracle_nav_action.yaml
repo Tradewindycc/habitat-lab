@@ -18,7 +18,7 @@ enable_lateral_move: False
 # is more than collision_threshold for any point.
 collision_threshold: 0.1
 dist_thresh: 0.4
-turn_thresh: 0.1
+turn_thresh: 0.05
 
 # For re-computing navmesh for different bases 
 base_type: "wheel"

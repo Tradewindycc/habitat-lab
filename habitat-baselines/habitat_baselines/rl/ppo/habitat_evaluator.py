@@ -134,7 +134,6 @@ class HabitatEvaluator(Evaluator):
 
             # If all prev_actions are zero, meaning this is the start of an episode
             # Then collect the context of the episode
-            if not prev_actions.any():
             if current_episodes_info[0].episode_id != cur_ep_id:
                 cur_ep_id = current_episodes_info[0].episode_id
                 envs_text_context = envs.call(["get_task_text_context"] * envs.num_envs)

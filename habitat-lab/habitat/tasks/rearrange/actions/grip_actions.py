@@ -60,7 +60,7 @@ class MagicGraspAction(GripSimulatorTaskAction):
             if to_target < self._config.grasp_thresh_dist:
                 self.cur_grasp_mgr.snap_to_obj(
                     self._sim.scene_obj_ids[closest_obj_idx],
-                    force=False,
+                    force=True,
                     rel_pos=mn.Vector3(0.1, 0.0, 0.0),
                     keep_T=keep_T,
                 )
@@ -89,7 +89,7 @@ class MagicGraspAction(GripSimulatorTaskAction):
         if grip_action is None:
             return
 
-        if grip_action >= 0 and not self.cur_grasp_mgr.is_grasped:
+        if grip_action > 0 and not self.cur_grasp_mgr.is_grasped:
             self._grasp()
         elif grip_action < 0 and self.cur_grasp_mgr.is_grasped:
             self._ungrasp()

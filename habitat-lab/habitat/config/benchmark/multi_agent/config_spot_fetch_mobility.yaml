@@ -92,10 +92,10 @@ habitat:
         lin_speed: 40.0
         ang_speed: 20.0
 
-    robot_at_thresh: 2.0
+    robot_at_thresh: 3.0
 
   environment:
-    max_episode_steps: 1500
+    max_episode_steps: 2000
   simulator:
     type: RearrangeSim-v0
     seed: 100
@@ -123,8 +123,8 @@ habitat:
     w2j: False
     json_path: "data/robots/robot_configs/mp3d/mobility_eval.json"
   dataset:
-    data_path: data/datasets/mp3d/mobility_episodes_1k5.json.gz
+    data_path: data/datasets/mp3d/mp3d_episodes.json.gz
     # new
-    randomize_agent_start: 0
+    randomize_agent_start: 1
     robot_config: data/robots/robot_configs/mp3d/mobility_eval.json
     mode: mobility

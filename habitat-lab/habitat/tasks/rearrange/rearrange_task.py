@@ -307,7 +307,7 @@ class RearrangeTask(NavigationTask):
         # Task sensors (all non-visual sensors)
         obs.update(
             self.sensor_suite.get_observations(
-                observations=obs, episode=episode, task=self, should_time=True
+                observations=obs, episode=episode, task=self, should_time=True, physics_target_sps=self._physics_target_sps
             )
         )
         return obs
@@ -354,6 +354,10 @@ class RearrangeTask(NavigationTask):
     ) -> bool:
         done = False
         if self.should_end:
+            done = True
+
+        action_stop = [v for k, v in action['action_args'].items() if 'rearrange_stop' in k]
+        if all(v == [1] for v in action_stop):
             done = True
 
         # Check that none of the articulated agents are violating the hold constraint

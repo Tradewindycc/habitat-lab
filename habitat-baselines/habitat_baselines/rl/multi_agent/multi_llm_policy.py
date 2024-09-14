@@ -300,7 +300,19 @@ class MultiLLMPolicy(MultiPolicy):
                     agent_arguments=select_agent_arguments,  # pass the task planning result to the policy
                 )
             )
-        policy_info = _merge_list_dict([ac.policy_info for ac in agent_actions])
+
+        should_terminate = True
+        for agent_action in agent_actions:
+            if agent_action.skill_id != 2.0:
+                should_terminate = False
+                break
+        if should_terminate:
+            for agent_i, policy in enumerate(self._active_policies):
+                agent_actions[agent_i].actions[i, policy._stop_action_idx] = 1.0
+
+        policy_info = _merge_list_dict(
+            [ac.policy_info for ac in agent_actions]
+        )
         batch_size = masks.shape[0]
         device = masks.device
 

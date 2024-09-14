@@ -8,7 +8,7 @@ from gym import spaces
 from habitat.core.spaces import ActionSpace
 from habitat.tasks.rearrange.rearrange_sensors import (
     IsHoldingSensor,
-    RelativeRestingPositionSensor,
+    ObjectToGoalDistanceSensor,
 )
 from habitat_baselines.common.logging import baselines_logger
 from habitat_baselines.rl.hrl.skills.nn_skill import NnSkillPolicy
@@ -118,12 +118,6 @@ class OraclePickPolicy(NnSkillPolicy):
         masks,
         batch_idx,
     ) -> torch.BoolTensor:
-        # Is the agent holding the object and is the end-effector at the
-        # resting position?
-        # rel_resting_pos = torch.linalg.vector_norm(
-        #     observations[RelativeRestingPositionSensor.cls_uuid], dim=-1
-        # )
-        # is_within_thresh = rel_resting_pos < self._config.at_resting_threshold
         is_holding = observations[IsHoldingSensor.cls_uuid].view(-1)
         return is_holding.type(torch.bool)
 
@@ -266,14 +260,11 @@ class OraclePlacePolicy(OraclePickPolicy):
         masks,
         batch_idx,
     ) -> torch.BoolTensor:
-        # Is the agent holding the object and is the end-effector at the
-        # resting position?
-        # rel_resting_pos = torch.linalg.vector_norm(
-        #     observations[RelativeRestingPositionSensor.cls_uuid], dim=-1
-        # )
-        # is_within_thresh = rel_resting_pos < self._config.at_resting_threshold
-        is_holding = observations[IsHoldingSensor.cls_uuid].view(-1)
-        return ~is_holding.type(torch.bool)
+        rel_resting_pos = torch.linalg.vector_norm(
+            observations[ObjectToGoalDistanceSensor.cls_uuid], dim=-1
+        )
+        # TODO(zxz): need to change the done condition
+        return torch.tensor([rel_resting_pos < 0.02])
 
     def _parse_skill_arg(self, skill_name: str, skill_arg):
         if isinstance(skill_arg, dict):

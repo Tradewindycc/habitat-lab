@@ -104,7 +104,7 @@ class SceneGraphMP3D(SceneGraphBase):
                     is_inside = np.all(pos >= region_bbox[0]) and np.all(
                         pos <= region_bbox[1]
                     )
-                    if is_inside:
+                    if is_inside and abs_obj_id not in self.object_layer.obj_ids:
                         object_node = self.object_layer.add_object(
                             center=pos,
                             rotation=rot,
@@ -128,7 +128,7 @@ class SceneGraphMP3D(SceneGraphBase):
                         is_inside = np.all(pos >= region_bbox[0]) and np.all(
                             pos <= region_bbox[1]
                         )
-                        if is_inside:
+                        if is_inside and abs_obj_id not in self.object_layer.obj_ids:
                             object_node = self.object_layer.add_object(
                                 center=pos,
                                 rotation=rot,

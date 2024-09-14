@@ -17,7 +17,7 @@ enable_lateral_move: False
 # There is a collision if the difference between the clamped NavMesh position and target position
 # is more than collision_threshold for any point.
 collision_threshold: 0.1
-dist_thresh: 0.4
+dist_thresh: 0.5
 turn_thresh: 0.5
 
 # For re-computing navmesh for different bases 

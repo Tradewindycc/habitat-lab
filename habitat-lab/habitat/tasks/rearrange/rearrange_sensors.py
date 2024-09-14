@@ -479,6 +479,38 @@ class IsHoldingSensor(UsesArticulatedAgentInterface, Sensor):
         ).reshape((1,))
 
 
+@registry.register_sensor
+class ObjectToGoalDistanceSensor(UsesArticulatedAgentInterface, Sensor):
+    """
+    Euclidean distance from the target object to the goal.
+    """
+
+    cls_uuid: str = "object_to_goal_distance_sensor"
+
+    def __init__(self, sim, config, *args, **kwargs):
+        super().__init__(config=config)
+        self._sim = sim
+
+    @staticmethod
+    def _get_uuid(*args, **kwargs):
+        return ObjectToGoalDistanceSensor.cls_uuid
+
+    def _get_sensor_type(self, *args, **kwargs):
+        return SensorTypes.TENSOR
+
+    def _get_observation_space(self, *args, **kwargs):
+        return spaces.Box(shape=(1,), low=0, high=1, dtype=np.float32)
+
+    def get_observation(self, *args, episode, **kwargs):
+        task = kwargs['task']
+        idxs, goal_pos = self._sim.get_targets()
+        scene_pos = self._sim.get_scene_pos()
+        target_pos = scene_pos[idxs]
+        distances = np.linalg.norm(target_pos - goal_pos, ord=2, axis=-1)
+        # TODO(zxz): need to change the return
+        return distances[self.agent_id]
+
+
 @registry.register_measure
 class ObjectToGoalDistance(Measure):
     """

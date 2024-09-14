@@ -119,11 +119,11 @@ class RearrangeGraspManager:
         :param force: If True, reset the collision group of the now released object immediately instead of waiting for its distance from the end effector to reach a threshold.
         """
         self._vis_info = []
-        if len(self._snap_constraints) == 0:
-            # No constraints to unsnap
-            self._snapped_obj_id = None
-            self._snapped_marker_id = None
-            return
+        # if len(self._snap_constraints) == 0:
+        #     # No constraints to unsnap
+        #     self._snapped_obj_id = None
+        #     self._snapped_marker_id = None
+        #     return
 
         if self._snapped_obj_id is not None:
             obj_bb = get_rigid_aabb(self.snap_idx, self._sim)
@@ -144,7 +144,7 @@ class RearrangeGraspManager:
 
         self._snapped_obj_id = None
         self._snapped_marker_id = None
-        self._managed_articulated_agent.close_gripper()
+        # self._managed_articulated_agent.close_gripper()
 
     @property
     def snap_idx(self) -> Optional[int]:
@@ -315,8 +315,8 @@ class RearrangeGraspManager:
                 f"Tried snapping to {snap_obj_id} when already snapped to {self._snapped_obj_id}"
             )
 
-        self._snapped_obj_id = snap_obj_id
         if force:
+            self._snapped_obj_id = snap_obj_id
             # Set the transformation to be in the robot's hand already.
             self.update_object_to_grasp()
 

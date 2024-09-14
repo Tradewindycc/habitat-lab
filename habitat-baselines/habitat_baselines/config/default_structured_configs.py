@@ -237,7 +237,7 @@ class HrlDefinedSkillConfig(HabitatBaselinesBaseConfig):
     # Overrides the config file of a neural network skill rather than loading
     # the config file from the checkpoint file.
     force_config_file: str = ""
-    at_resting_threshold: float = 0.15
+    at_resting_threshold: float = 0.05
     # If true, this will apply the post-conditions of the skill after it
     # terminates.
     apply_postconds: bool = False

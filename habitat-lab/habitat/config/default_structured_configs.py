@@ -61,6 +61,7 @@ __all__ = [
     # REARRANGEMENT LAB SENSORS
     "RelativeRestingPositionSensorConfig",
     "IsHoldingSensorConfig",
+    "ObjectToGoalDistanceSensorConfig",
     "EEPositionSensorConfig",
     "JointSensorConfig",
     "HumanoidJointSensorConfig",
@@ -319,7 +320,7 @@ class OraclePickActionConfig(ArmActionConfig):
     type: str = "ArmPickAction"
     arm_controller: str = "OraclePickAction"
     grip_controller: str = "MagicGraspAction"
-    grasp_thresh_dist: float = 0.05
+    grasp_thresh_dist: float = 0.1
     render_ee_target: bool = True
 
 @dataclass
@@ -728,6 +729,13 @@ class IsHoldingSensorConfig(LabSensorConfig):
     Rearrangement only. A single float sensor with value 1.0 if the robot is grasping any object and 0.0 otherwise.
     """
     type: str = "IsHoldingSensor"
+
+@dataclass
+class ObjectToGoalDistanceSensorConfig(LabSensorConfig):
+    r"""
+    Rearrangement only. A single float sensor with distance from target object to goal position.
+    """
+    type: str = "ObjectToGoalDistanceSensor"
 
 
 @dataclass
@@ -2697,6 +2705,12 @@ cs.store(
     group="habitat/task/lab_sensors",
     name="is_holding_sensor",
     node=IsHoldingSensorConfig,
+)
+cs.store(
+    package="habitat.task.lab_sensors.object_to_goal_distance_sensor",
+    group="habitat/task/lab_sensors",
+    name="object_to_goal_distance_sensor",
+    node=ObjectToGoalDistanceSensorConfig,
 )
 cs.store(
     package="habitat.task.lab_sensors.relative_resting_pos_sensor",

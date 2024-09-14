@@ -75,6 +75,7 @@ class PolicyActionData:
     take_actions: Optional[torch.Tensor] = None
     policy_info: Optional[List[Dict[str, Any]]] = None
     should_inserts: Optional[torch.BoolTensor] = None
+    skill_id: Optional[torch.Tensor] = None
 
     def write_action(self, write_idx: int, write_action: torch.Tensor) -> None:
         """

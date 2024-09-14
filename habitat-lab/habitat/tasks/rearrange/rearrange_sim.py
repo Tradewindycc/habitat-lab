@@ -284,7 +284,7 @@ class RearrangeSim(HabitatSim):
         self.ep_info = ep_info
         mp3d = 'dataset' in ep_info.info and ep_info.info['dataset'] == 'mp3d'
 
-        new_scene = self.prev_scene_id != ep_info.scene_id or mp3d
+        new_scene = (self.prev_scene_id != ep_info.scene_id) or mp3d
         if new_scene:
             self._prev_obj_names = None
 
@@ -292,7 +292,7 @@ class RearrangeSim(HabitatSim):
         ep_info.rigid_objs = sorted(ep_info.rigid_objs, key=lambda x: x[0])
         obj_names = [x[0] for x in ep_info.rigid_objs]
         # Only remove and re-add objects if we have a new set of objects.
-        should_add_objects = self._prev_obj_names != obj_names or mp3d
+        should_add_objects = (self._prev_obj_names != obj_names) or mp3d
         self._prev_obj_names = obj_names
 
         self.agents_mgr.pre_obj_clear()

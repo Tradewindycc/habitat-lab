@@ -394,6 +394,7 @@ class HierarchicalPolicy(nn.Module, Policy):
             values=hl_info.values,
             action_log_probs=hl_info.action_log_probs,
             rnn_hidden_states=rnn_hidden_states,
+            skill_id=skill_id
         )
 
     @property

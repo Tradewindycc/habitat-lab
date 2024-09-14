@@ -97,7 +97,6 @@ receptacle_sets:
     name: "table"
     included_object_substrings:
       - "frl_apartment_table_01"
-      - "frl_apartment_wall_cabinet_03"
       - "frl_apartment_basket"
       - "frl_apartment_tvstand"
       - "frl_apartment_cabinet"
@@ -105,7 +104,6 @@ receptacle_sets:
       - "frl_apartment_chair_01"
       - "frl_apartment_table_03"
       - "frl_apartment_table_02"
-      - "frl_apartment_sofa"
       - "frl_apartment_wall_cabinet_01"
     excluded_object_substrings: []
     included_receptacle_substrings:

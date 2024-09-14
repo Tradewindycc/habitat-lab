@@ -237,7 +237,7 @@ def observations_to_image(observation: Dict, info: Dict,
         robot_names[agent] = (config.habitat.simulator.agents[agent].
                               articulated_agent_type)
     image_option = config.habitat_baselines.eval.image_option
-    image_filter_list = config.habitat_baselines.eval.get("image_filter_list", ["head_rgb", "arm_workspace_rgb"])
+    image_filter_list = config.habitat_baselines.eval.get("image_filter_list", ["third"])
     image_dir = config.habitat_baselines.image_dir
 
     for sensor_name in observation:
