@@ -8,6 +8,10 @@ wait:
   max_skill_steps: -1
   ignore_grip: True
 
+stop:
+  skill_name: "StopSkillPolicy"
+  max_skill_steps: -1
+
 nav_to_obj:
   skill_name: "OracleNavPolicy"
   # action_name: "base_velocity_non_cylinder"

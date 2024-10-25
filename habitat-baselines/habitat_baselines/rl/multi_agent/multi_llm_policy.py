@@ -439,7 +439,7 @@ class MultiLLMPolicy(MultiPolicy):
         self._update_obs_with_agent_prefix_fn = update_obs_with_agent_prefix_fn
 
         # if True, the episode will terminate when all the agent choose to wait
-        self.should_terminate_on_wait = kwargs.get("should_terminate_on_wait", False)
+        self.should_terminate_on_wait = kwargs.get("should_terminate_on_wait", True)
 
         # config for ablation study
         self.should_group_discussion = kwargs.get("should_group_discussion", True)
@@ -474,6 +474,7 @@ class MultiLLMPolicy(MultiPolicy):
     ):
         # debug info
         # TODO: disable saving chat history for batch experiments
+        new_episode = kwargs.get("new_episode", False)
         save_chat_history = kwargs.get("save_chat_history", True)
         save_chat_history_dir = kwargs.get("save_chat_history_dir", "./chat_history_output")
         # Create a directory to save chat history
@@ -513,7 +514,7 @@ class MultiLLMPolicy(MultiPolicy):
             env_prev_actions = prev_actions[i]
             env_text_context = envs_text_context[i]
             # if no previous actions, then it is the first step of the episode
-            if not env_prev_actions.any():
+            if new_episode:
                 if "robot_resume" in env_text_context:
                     robot_resume = env_text_context["robot_resume"]
                 if "scene_description" in env_text_context:

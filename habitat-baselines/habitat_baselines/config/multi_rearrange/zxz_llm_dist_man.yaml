@@ -75,6 +75,7 @@ habitat_baselines:
               - "obj_goal_sensor"
               - "all_predicates"
             allowed_actions:
+              - stop
               - wait
               - nav_to_goal
               - nav_to_obj
@@ -104,6 +105,7 @@ habitat_baselines:
               - "obj_goal_sensor"
               - "all_predicates"
             allowed_actions:
+              - stop
               - wait
               - nav_to_goal
               - nav_to_obj

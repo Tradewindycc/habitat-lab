@@ -75,6 +75,7 @@ habitat_baselines:
               - "obj_goal_sensor"
               - "all_predicates"
             allowed_actions:
+              - stop
               - wait
               - nav_to_goal
               - nav_to_obj
@@ -82,29 +83,6 @@ habitat_baselines:
               - pick
               - place
               - nav_to_receptacle_by_name
-          # Override to use the oracle navigation skill (which will actually execute navigation).
-          defined_skills:
-            nav_to_obj:
-              skill_name: "OracleNavPolicy"
-              # action_name: "base_velocity_non_cylinder"
-              action_name: "base_velocity"
-              obs_skill_inputs: ["obj_start_sensor", "abs_obj_start_sensor", "obj_goal_sensor", "abs_obj_goal_sensor"]
-              max_skill_steps: 1500
-            pick:
-              skill_name: "OraclePickPolicy"
-              action_name: "arm_pick_action"
-              obs_skill_inputs: ["is_holding"]
-              max_skill_steps: 100
-            place:
-              skill_name: "OraclePlacePolicy"
-              action_name: "arm_place_action"
-              obs_skill_inputs: []
-              max_skill_steps: 100
-            reset_arm:
-              skill_name: "ResetArmSkill"
-              action_name: "arm_reset_action"
-              obs_skill_inputs: []
-              max_skill_steps: 100
 
           ignore_skills:
             - open_cab
@@ -128,6 +106,7 @@ habitat_baselines:
               - "obj_goal_sensor"
               - "all_predicates"
             allowed_actions:
+              - stop
               - wait
               - nav_to_goal
               - nav_to_obj
@@ -135,30 +114,6 @@ habitat_baselines:
               - pick
               - place
               - nav_to_receptacle_by_name
-          # Override to use the oracle navigation skill (which will actually execute navigation).
-          # TODO: add oracle nav policy for drone
-          defined_skills:
-            nav_to_obj:
-              skill_name: "OracleNavPolicy"
-              # action_name: "base_velocity_non_cylinder"
-              action_name: "base_velocity"
-              obs_skill_inputs: ["obj_start_sensor", "abs_obj_start_sensor", "obj_goal_sensor", "abs_obj_goal_sensor"]
-              max_skill_steps: 1500
-            pick:
-              skill_name: "OraclePickPolicy"
-              action_name: "arm_pick_action"
-              obs_skill_inputs: ["is_holding"]
-              max_skill_steps: 100
-            place:
-              skill_name: "OraclePlacePolicy"
-              action_name: "arm_place_action"
-              obs_skill_inputs: []
-              max_skill_steps: 100
-            reset_arm:
-              skill_name: "ResetArmSkill"
-              action_name: "arm_reset_action"
-              obs_skill_inputs: []
-              max_skill_steps: 100
 
           ignore_skills:
             - open_cab

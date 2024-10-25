@@ -97,7 +97,7 @@ habitat:
     robot_at_thresh: 2.0
 
   environment:
-    max_episode_steps: 3000
+    max_episode_steps: 1000
     episode_steps_file: "test_mobility_episodes_1k5_1.json"
   simulator:
     type: RearrangeSim-v0
@@ -137,4 +137,3 @@ habitat:
     should_robot_resume: True
     should_numerical: True
     
-    should_terminate_on_wait: False

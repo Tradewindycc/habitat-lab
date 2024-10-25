@@ -143,10 +143,11 @@ class HabitatMASEvaluator(Evaluator):
             and envs.num_envs > 0
         ):
             current_episodes_info = envs.current_episodes()
-
+            new_episode = False
             # If all prev_actions are zero, meaning this is the start of an episode
             # Then collect the context of the episode
             if current_episodes_info[0].episode_id != cur_ep_id:
+                new_episode = True
                 cur_ep_id = current_episodes_info[0].episode_id
                 print("===============================================================================")
                 print("=================================Episode ID====================================")
@@ -170,6 +171,7 @@ class HabitatMASEvaluator(Evaluator):
                 space_lengths = {
                     "index_len_recurrent_hidden_states": hidden_state_lens,
                     "index_len_prev_actions": action_space_lens,
+                    "new_episode": new_episode
                 }
             with inference_mode():
                 action_data = agent.actor_critic.act(

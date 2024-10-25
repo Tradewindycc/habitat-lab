@@ -113,18 +113,7 @@ class CrabAgent:
             CrabAgent.message_pipe[self.name] = []
 
         action_name, parameters = self.llm_model.chat(str(observation))
-        if action_name == "send_request":
-            target_agent = parameters["target_agent"]
-            if target_agent == self.name:  # send request to itself
-                return None
-            request = parameters["request"]
-            if target_agent not in CrabAgent.message_pipe:
-                CrabAgent.message_pipe[target_agent] = []
-            prompt = REQUEST_TEMPLATE.format(source_agent=self.name, request=request)
-            CrabAgent.message_pipe[target_agent].append(prompt)
-            return {"name": "wait", "arguments": ["500"]}
-        if action_name == "wait":
-            return {"name": "wait", "arguments": ["500"]}
+        
         if action_name in [
             "nav_to_obj",
             "nav_to_goal",
@@ -134,8 +123,18 @@ class CrabAgent:
         ]:
             parameters["robot"] = self.name
             return {"name": action_name, "arguments": parameters}
-        else:
-            return {"name": action_name, "arguments": parameters}
+        elif action_name == "wait":
+            return {"name": "wait", "arguments": ["500"]}
+        elif action_name == "send_request":
+            target_agent = parameters["target_agent"]
+            if target_agent == self.name:  # send request to itself
+                return None
+            request = parameters["request"]
+            if target_agent not in CrabAgent.message_pipe:
+                CrabAgent.message_pipe[target_agent] = []
+            prompt = REQUEST_TEMPLATE.format(source_agent=self.name, request=request)
+            CrabAgent.message_pipe[target_agent].append(prompt)
+        return {"name": "stop", "arguments": ["500"]}
 
 def _generate_action_prompt(action_space: list[Action], include_arguments: bool = False) -> str:
     if include_arguments:

@@ -160,4 +160,3 @@ habitat:
     should_robot_resume: True
     should_numerical: True
     
-    should_terminate_on_wait: False

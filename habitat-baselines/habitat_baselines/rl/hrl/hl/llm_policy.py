@@ -15,7 +15,7 @@ from habitat_baselines.rl.hrl.hl.high_level_policy import HighLevelPolicy
 from habitat_baselines.rl.ppo.policy import PolicyActionData
 from habitat_mas.utils import AgentArguments
 
-ACTION_POOL = [get_agents, send_request, nav_to_obj, pick, place, reset_arm, wait]
+ACTION_POOL = [send_request, nav_to_obj, pick, place, reset_arm, wait]
 
 
 class LLMHighLevelPolicy(HighLevelPolicy):
@@ -117,7 +117,6 @@ class LLMHighLevelPolicy(HighLevelPolicy):
             get_next_action_message = start_action_prompt.format(
                 scene_description=semantic_observation
             )
-            self.llm_agent.start_act = True
         else:
             get_next_action_message = step_action_prompt
 
@@ -142,7 +141,7 @@ class LLMHighLevelPolicy(HighLevelPolicy):
             print("Agent: {} {}".format(self.llm_agent.name, self.llm_agent.get_token_usage()))
             print("==============================================")
             if llm_output is None:
-                next_skill[batch_idx] = self._skill_name_to_idx["wait"]
+                next_skill[batch_idx] = self._skill_name_to_idx["stop"]
                 skill_args_data[batch_idx] = ["500"]
                 continue
 
@@ -154,9 +153,10 @@ class LLMHighLevelPolicy(HighLevelPolicy):
                 skill_args_data[batch_idx] = action_args
             else:
                 # If the action is not valid, do nothing
-                next_skill[batch_idx] = self._skill_name_to_idx["wait"]
+                next_skill[batch_idx] = self._skill_name_to_idx["stop"]
                 skill_args_data[batch_idx] = ["500"]
 
+        self.llm_agent.start_act = True
         return (
             next_skill,
             skill_args_data,

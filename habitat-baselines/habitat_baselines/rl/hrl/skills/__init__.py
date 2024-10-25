@@ -24,6 +24,7 @@ from habitat_baselines.rl.hrl.skills.place import PlaceSkillPolicy
 from habitat_baselines.rl.hrl.skills.reset import ResetArmSkill
 from habitat_baselines.rl.hrl.skills.skill import SkillPolicy
 from habitat_baselines.rl.hrl.skills.wait import WaitSkillPolicy
+from habitat_baselines.rl.hrl.skills.wait import StopSkillPolicy
 
 __all__ = [
     "ArtObjSkillPolicy",
@@ -42,4 +43,5 @@ __all__ = [
     "SkillPolicy",
     "WaitSkillPolicy",
     "NoopSkillPolicy",
+    "StopSkillPolicy",
 ]

@@ -128,7 +128,6 @@ habitat:
     randomize_agent_start: 0
     robot_config: data/robots/robot_configs/hssd/dist_man.json
     mode: manipulation
-    should_terminate_on_wait: False
     should_group_discussion: True
     should_agent_reflection: True
     should_robot_resume: True

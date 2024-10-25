@@ -11,6 +11,41 @@ from habitat_baselines.rl.hrl.skills.skill import SkillPolicy
 from habitat_baselines.rl.hrl.utils import find_action_range
 from habitat_baselines.rl.ppo.policy import PolicyActionData
 
+class StopSkillPolicy(SkillPolicy):
+    def __init__(
+        self,
+        config,
+        action_space: spaces.Space,
+        batch_size,
+    ):
+        super().__init__(config, action_space, batch_size, True)
+        self._stop_time = -1
+
+    def _parse_skill_arg(self, skill_name: str, skill_arg: str) -> Any:
+        self._stop_time = int(skill_arg[0])
+        self._internal_log(f"Requested stop time {self._stop_time}")
+
+    def _is_skill_done(
+        self, observations, rnn_hidden_states, prev_actions, masks, batch_idx
+    ) -> torch.BoolTensor:
+        assert self._stop_time > 0
+        return (self._cur_skill_step >= self._stop_time)[batch_idx]
+
+    def _internal_act(
+        self,
+        observations,
+        rnn_hidden_states,
+        prev_actions,
+        masks,
+        cur_batch_idx,
+        deterministic=False,
+    ):
+        action = torch.zeros(
+            (masks.shape[0], self._full_ac_size), device=prev_actions.device
+        )
+        return PolicyActionData(
+            actions=action, rnn_hidden_states=rnn_hidden_states
+        )
 
 class WaitSkillPolicy(SkillPolicy):
     def __init__(
