@@ -104,3 +104,5 @@ data
 video_dir/**
 *.ply
 debug/
+
+chat_history_output/
